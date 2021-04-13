@@ -1,6 +1,8 @@
 #include <stdio.h>
 
+#include <pthread.h>
+
 int main()
 {
-    printf("Example!\n");
+    printf("Hello World!\n");
 }
