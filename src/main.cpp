@@ -23,15 +23,10 @@ void Draw()
 
     panel->Render();
 
-    tide::fontRenderer->RenderText("hack", std::to_string(engine->window->fps), engine->GetWindowWidth()  - tide::fontRenderer->TextWidth("hack", std::to_string(engine->window->fps)), 0, COLOR(0xFFFFFF));
+    tide::fontRenderer->RenderText("hack", std::to_string(engine->window->fps), engine->GetWindowWidth()  - tide::fontRenderer->TextWidth("hack", std::to_string(engine->window->fps)), engine->GetFrameBufferHeight() - 32, COLOR(0xFFFFFF));
     
     std::string cursorString = std::to_string((int)panel->cursor.x) + ":" + std::to_string((int)panel->cursor.y);
-    tide::fontRenderer->RenderText("hack", cursorString, engine->GetWindowWidth() - tide::fontRenderer->TextWidth("hack", cursorString), 16, COLOR(0xFFFFFF));
-
-    std::string vBoundsString = std::to_string(panel->GetVerticalScrollBounds().x) + "->" + std::to_string(panel->GetVerticalScrollBounds().y);
-    tide::fontRenderer->RenderText("hack", vBoundsString, engine->GetWindowWidth() - tide::fontRenderer->TextWidth("hack", vBoundsString), 32, COLOR(0xFFFFFF));
-    std::string hBoundsString = std::to_string(panel->GetHorizontalScrollBounds().x) + "->" + std::to_string(panel->GetHorizontalScrollBounds().y);
-    tide::fontRenderer->RenderText("hack", hBoundsString, engine->GetWindowWidth() - tide::fontRenderer->TextWidth("hack", hBoundsString), 64, COLOR(0xFFFFFF));
+    tide::fontRenderer->RenderText("hack", cursorString, engine->GetWindowWidth() - tide::fontRenderer->TextWidth("hack", cursorString), engine->GetFrameBufferHeight() - 16, COLOR(0xFFFFFF));
 }
 
 void OnCharAction(uint codepoint)
@@ -47,42 +42,34 @@ void OnKeyAction(int key, int action, int scancode)
         if(key == GLFW_KEY_BACKSPACE)
         {
             panel->RemoveBackwardChar();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_DELETE)
         {
             panel->RemoveForwardChar();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_TAB)
         {
             panel->WriteChar('\t');
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_ENTER)
         {
             panel->NewLine();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_UP)
         {
             panel->MoveCursorUp();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_DOWN)
         {
             panel->MoveCursorDown();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_LEFT)
         {
             panel->MoveCursorLeft();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
         if(key == GLFW_KEY_RIGHT)
         {
             panel->MoveCursorRight();
-            std::cout << panel->cursor.x << ", " << panel->cursor.y << std::endl;
         }
     }
 }
@@ -95,7 +82,7 @@ int main()
         engine->charListeners.push_back(OnCharAction);
         engine->keyListeners.push_back(OnKeyAction);
         engine->resizeListeners.push_back([](int width, int height){
-            panel->dim = {width - 50, height};
+            panel->dim = {width, height};
         });
 
         glEnable(GL_BLEND);
@@ -108,7 +95,7 @@ int main()
         tide::InitialisePrefab();
         tide::fontRenderer->LoadFace("hack", "hack.ttf", 16);
 
-        panel = new tide::TEXT_PANEL(glm::vec2(0, 0), glm::vec2(engine->GetFrameBufferWidth() - 50, engine->GetFrameBufferHeight()));
+        panel = new tide::TEXT_PANEL(glm::vec2(0, 0), glm::vec2(engine->GetFrameBufferWidth(), engine->GetFrameBufferHeight()));
         panel->isFocused = true;
         engine->Start(Update, Draw);
     }

@@ -27,6 +27,8 @@ public:
     
     glm::ivec2 scrollOffset;
 
+    glm::vec2 camera;
+
     glm::vec2 cursor;
     glm::vec2 pos;
     glm::vec2 dim;
@@ -35,8 +37,11 @@ public:
     
     bool isFocused;
     
-    glm::ivec2 GetVerticalScrollBounds();
-    glm::ivec2 GetHorizontalScrollBounds();
+    glm::ivec2 GetScrollBoundsVertical();
+    glm::vec2 GetPixelShiftBorder();
+
+    float GetCursorPixelX();
+    float GetTextStartX();
 
     void WriteChar(uint codepoint);
     void RemoveBackwardChar();

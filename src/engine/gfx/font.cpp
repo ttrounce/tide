@@ -273,10 +273,10 @@ void FONT_RENDERER::RenderCursor(float x, float y, float width, float height, CO
 
 bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color)
 {
-    return RenderText(key, text, screenX, screenY, color, -1);
+    return RenderText(key, text, screenX, screenY, color, glm::vec2(0, INT32_MAX));
 }
 
-bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color, float cutoffWidth)
+bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color, glm::vec2 ssHorizontalCuttoff)
 {
     if(fonts.count(key) == 0)
     {
@@ -288,6 +288,8 @@ bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, i
     glUseProgram(program);
     glBindVertexArray(vao.handle);
     glBindTexture(GL_TEXTURE_2D_ARRAY, font->textureHandleGL);
+
+    UniformVec2(program, "ssHorizontalCuttoff", ssHorizontalCuttoff);
 
     // Color matrix uniform
     UniformVec3(program, "color", color.vec);
@@ -309,8 +311,6 @@ bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, i
             caret += font->glyphs.at(FT_Get_Char_Index(font->ftFace, ' '))->advance * 4;
             continue;
         }
-        if(cutoffWidth != -1 && caret >= cutoffWidth)
-            break;
 
         uint charInd = FT_Get_Char_Index(font->ftFace, text[i]);
         if(font->glyphs.find(charInd) == font->glyphs.end())
@@ -354,6 +354,7 @@ bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, i
     glUseProgram(0);
     return true;
 }
+
 
 float FONT_RENDERER::TextWidth(std::string key, std::string text)
 {

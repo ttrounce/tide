@@ -14,7 +14,7 @@ elseif(BUILD_TYPE EQUAL 1)
     # Release
     message("[BUILD TYPE] Release (With Tests)")
     set(CMAKE_BUILD_TYPE "Release")
-    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wno-error=conversion -Werror -Wall -O3")
+    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall -O3")
     set(BUILD_TESTS "ON")
 elseif(BUILD_TYPE EQUAL 2)
     # Release (No Tests)

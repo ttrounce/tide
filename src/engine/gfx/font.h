@@ -96,7 +96,7 @@ class FONT_RENDERER
         bool CloneFace(std::string key, std::string newKey, uint newFontSize);
 
         bool RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color);
-        bool RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color, float cutoffWidth);
+        bool RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color, glm::vec2 screenspaceHorizontalCuttoff);
         /**
          * Gauges the width of a string of text using a font in pixels.
          * @returns -1 if the font doesn't exist.
