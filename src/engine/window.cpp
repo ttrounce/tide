@@ -1,21 +1,18 @@
 #include "window.h"
 #include "engine.h"
 
-#include <time.h>
-#include <iostream>
-#include <string>
-#include <glad/glad.h>
-#include <exception>
 #include <glm/ext/scalar_common.hpp>
-#include <thread>
+#include <glad/glad.h>
+#include <fmt/core.h>
 #include <chrono>
+#include <thread>
 
 namespace tide
 {
 
 static void ErrorCallbackGLFW(int error, const char* description)
 {
-    std::cout << "[TIDE] " << description << std::endl;
+    fmt::print("[TIDE] {}\n", description);
 }
 
 ENGINE::ENGINE(int initialWidth, int initialHeight, std::string title)
@@ -53,10 +50,19 @@ ENGINE::ENGINE(int initialWidth, int initialHeight, std::string title)
     {
         window->keyboard->keys[i] = false;
     }
-
+    glfwSetCursorPosCallback(window->handle, [](GLFWwindow* handle, double x, double y){
+        engine->window->mouse->pos = {x, y};
+    });
     glfwSetWindowSizeCallback(window->handle, [](GLFWwindow* window, int width, int height){
         glViewport(0, 0, width, height);
         for(auto it = engine->resizeListeners.begin(); it != engine->resizeListeners.end(); it++)
+        {
+            resize_listener rl = *it;
+            rl(width, height);
+        }
+    });
+    glfwSetFramebufferSizeCallback(window->handle, [](GLFWwindow* window, int width, int height){
+        for(auto it = engine->resizeFrameBufferListeners.begin(); it != engine->resizeFrameBufferListeners.end(); it++)
         {
             resize_listener rl = *it;
             rl(width, height);
@@ -96,12 +102,17 @@ void ENGINE::Start(void (*update)(double, double), void (*draw)())
 
     double frameTime = 0.0;
     int frameCount = 0;        
+
+    glfwSwapInterval(1);
+
     while(!glfwWindowShouldClose(window->handle))
     {
         auto endTime = std::chrono::high_resolution_clock::now();
         frameTime = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime)).count();
         startTime = endTime;
         
+        glfwPollEvents();
+
         updateAccumulator += frameTime;
         frameCountAccumulator += frameTime;
         
@@ -112,24 +123,22 @@ void ENGINE::Start(void (*update)(double, double), void (*draw)())
 
             // mouse delta calculations
             window->mouse->delta = glm::clamp(window->mouse->pos - window->mouse->lastPos, glm::vec2(-128.0f), glm::vec2(128.0f));
+            window->mouse->lastPos = window->mouse->pos;
 
             update(time, dt);
-
-            window->mouse->lastPos = window->mouse->pos;
         }
         
         if(frameCountAccumulator >= 1.0)
         {
-            window->fps = glm::clamp(frameCount, 0, 400);
+            window->fps = glm::max(frameCount, 0);
             frameCount = 0;
             frameCountAccumulator -= 1;
         }
+
         
         frameCount++;
         draw();
-        glfwSwapInterval(1);
         glfwSwapBuffers(window->handle);
-        glfwPollEvents();   
     } 
 }
 

@@ -31,7 +31,8 @@
 *.out
 *.app
 
-# VSCode
+# Editor
+.idea/
 .vscode/
 
 # Scripts

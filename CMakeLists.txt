@@ -4,11 +4,12 @@ project(tide)
 set(PROJECT_LIB tide_lib)
 set(PROJECT_TESTS tide_tests)
 
+
 if(BUILD_TYPE EQUAL 0)
     # Debug
     message("[BUILD TYPE] Debug")
     set(CMAKE_BUILD_TYPE "Debug")
-    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall -g")
+    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall -Werror -g")
     set(BUILD_TESTS "OFF")
 elseif(BUILD_TYPE EQUAL 1)
     # Release
@@ -42,6 +43,7 @@ add_subdirectory(dependencies/freetype)
 add_subdirectory(dependencies/glfw)
 add_subdirectory(dependencies/glad)
 add_subdirectory(dependencies/glm)
+add_subdirectory(dependencies/fmt)
 
 # Making Libraries and Executable
 
@@ -51,6 +53,7 @@ target_link_libraries(${PROJECT_LIB} freetype)
 target_link_libraries(${PROJECT_LIB} glfw)
 target_link_libraries(${PROJECT_LIB} glad)
 target_link_libraries(${PROJECT_LIB} glm)
+target_link_libraries(${PROJECT_LIB} fmt)
 target_include_directories(${PROJECT_LIB} PUBLIC src)
 
 add_executable(${PROJECT_NAME} src/main.cpp)
@@ -59,7 +62,7 @@ target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "../build"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "../../build"
     COMMAND ${CMAKE_COMMAND} -E rm $<TARGET_FILE:${PROJECT_NAME}>
     COMMENT "Copying ${PROJECT_NAME} to build folder"
 )
@@ -87,7 +90,7 @@ if(BUILD_TESTS)
     add_custom_command(
         TARGET ${PROJECT_TESTS}
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_TESTS}> "../build"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_TESTS}> "../../build"
         COMMAND ${CMAKE_COMMAND} -E rm $<TARGET_FILE:${PROJECT_TESTS}>
         COMMENT "Copying ${PROJECT_TESTS} to build folder"
     )

@@ -5,57 +5,72 @@
 #include <string>
 #include <vector>
 #include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 namespace tide
 {
 
+enum INPUT_TYPE
+{
+    INPUT_WRITE,
+
+    INPUT_REMOVE_BACK,
+    INPUT_REMOVE_FWRD,
+
+    INPUT_NEW_LINE,
+
+    INPUT_MOVE_LEFT,
+    INPUT_MOVE_RIGHT,
+    INPUT_MOVE_UP,
+    INPUT_MOVE_DOWN,
+
+    INPUT_SCROLL_UP,
+    INPUT_SCROLL_DOWN,
+
+    INPUT_SHIFT_LEFT,
+    INPUT_SHIFT_RIGHT
+};
+
 class TEXT_PANEL
 {
 private:
-    std::string content;
     std::vector<std::string> lines;
+    
+    glm::ivec2 GetCursorPixelPosition();
+    glm::ivec2 GetPixelShiftBorder();
+    BOUNDS GetContentBounds();
+
+    void WriteChar(uint codepoint);
+    int RemoveBackwardChar();
+    void RemoveForwardChar();
+    void NewLine();
+
+    void MoveCursorUp();
+    void MoveCursorDown();
+    void MoveCursorLeft(int cursorX);
+    void MoveCursorRight();
 public:
     struct {
         std::string fontName;
         int fontSize;
         int fontPadding;
-        int GetLineHeight()
+        int GetLineHeight() const
         {
-            return (2*fontPadding + fontSize);
+            return (2*this->fontPadding + this->fontSize);
         }
     } fontParameters;
     
-    glm::ivec2 scrollOffset;
+    glm::ivec2 camera;
+    glm::ivec2 cursor;
 
-    glm::vec2 camera;
+    RECT panelRectangle;
 
-    glm::vec2 cursor;
-    glm::vec2 pos;
-    glm::vec2 dim;
-
-    TEXT_PANEL(glm::vec2 pos, glm::vec2 dim);
-    
     bool isFocused;
-    
-    glm::ivec2 GetScrollBoundsVertical();
-    glm::vec2 GetPixelShiftBorder();
 
-    float GetCursorPixelX();
-    float GetTextStartX();
+    TEXT_PANEL(RECT rect);
 
-    void WriteChar(uint codepoint);
-    void RemoveBackwardChar();
-    void RemoveForwardChar();
-    void NewLine();
     void Render();
-
-    void MoveCursorUp();
-    void MoveCursorDown();
-    void MoveCursorLeft();
-    void MoveCursorRight();
-
-    void ScrollBoundsUp();
-    void ScrollBoundsDown();
+    void TakeInput(INPUT_TYPE type, uint codepoint);
 };
 
 }

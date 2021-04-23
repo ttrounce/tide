@@ -9,7 +9,7 @@
 #include <glad/glad.h>
 #include FT_FREETYPE_H
 #include <ft2build.h>
-#include <iostream>
+#include <fmt/core.h>
 
 namespace tide
 {
@@ -23,11 +23,11 @@ void InitFreeType()
     int error = FT_Init_FreeType(&library);
     if(error)
     {
-        std::cout << "[TIDE]" << " Error initialising FreeType" << std::endl;
+        fmt::print("[TIDE] Error initialising FreeType\n");
     }
     else
     {
-        std::cout << "[TIDE]" << " Successfullly initialised FreeType" << std::endl;
+        fmt::print("[TIDE] Successfully initialised FreeType\n");
     }
     fontRenderer = std::make_unique<FONT_RENDERER>();
 }
@@ -75,14 +75,14 @@ bool FONT_RENDERER::LoadFTFace(std::string key, std::string filepath, uint fontS
 {
     if(fonts.count(key) > 0)
     {
-        std::cout << "[TIDE]" << " Font" << key << " already present" << std::endl;
+        fmt::print("[TIDE] Font {} already present\n", key);
         return false;
     }
     std::shared_ptr<FONT> font = std::make_shared<FONT>();
     int error = FT_New_Face(library, filepath.c_str(), 0, &font->ftFace);
     if(error > 0)
     {
-        std::cout << "[TIDE] " << error << " " << FT_Error_String(error) << std::endl;
+        fmt::print("[TIDE] {} {}\n", error, FT_Error_String(error));
     }
     font->fontSize = fontSize;
     font->fontPath = filepath;
@@ -97,7 +97,7 @@ bool FONT_RENDERER::LoadFontGlyphs(std::string key)
 {
     if(fonts.count(key) == 0)
     {
-        std::cout << "[TIDE]" << " Unable to load glyphs of a font (" << key << ") that doesn't exist" << std::endl;
+        fmt::print("[TIDE] Unable to load glyphs of a font ({}) that doesn't exist\n", key);
         return false;
     }
 
@@ -115,11 +115,11 @@ bool FONT_RENDERER::LoadFontGlyphs(std::string key)
         uint error = FT_Load_Char(font->ftFace, charcode, FT_LOAD_RENDER);
         if(error)
         {
-            std::cout << "[TIDE]" << " Error loading character " << gindex << std::endl;
+            fmt::print("[TIDE] Error loading character {}\n", gindex);
         }
         if(font->ftFace->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)
         {
-            std::cout << "[TIDE]" << " Error where character " << charcode << "is the incorrect pixel mode (" << font->ftFace->glyph->bitmap.pixel_mode << ")" << std::endl;
+            fmt::print("[TIDE] Error where character {} is the incorrect pixel mode ({})\n", charcode, font->ftFace->glyph->bitmap.pixel_mode);
         }
 
         GLYPH* glyph = new GLYPH;
@@ -154,7 +154,7 @@ bool FONT_RENDERER::GenerateFontTextures(std::string key)
 {
     if(fonts.count(key) == 0)
     {
-        std::cout << "[TIDE]" << " Unable to create glyph textures of a font (" << key << ") that doesn't exist" << std::endl;
+        fmt::print("[TIDE] Unable to create glyph textures of a font ({}) that doesn't exist\n", key);
         return false;
     }
     std::shared_ptr<FONT> font = fonts.at(key);
@@ -172,7 +172,7 @@ bool FONT_RENDERER::GenerateFontTextures(std::string key)
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP);
     SetTextureArrayStorage(font->textureHandleGL, GL_R8, font->maxWidth, font->maxHeight, font->glyphs.size());
-    for(std::map<uint, GLYPH*>::iterator it = font->glyphs.begin(); it != font->glyphs.end(); it++)
+    for(std::unordered_map<uint, GLYPH*>::iterator it = font->glyphs.begin(); it != font->glyphs.end(); it++)
     {
         LoadTextureArrayLayer(font->textureHandleGL, it->second->bitmap, 0, 0, it->second->width, it->second->height, it->first, GL_RED);
     }
@@ -200,7 +200,7 @@ bool FONT_RENDERER::DeriveFace(std::string key, uint newFontSize)
 {
     if(fonts.count(key) == 0)
     {
-        std::cout << "[TIDE]" << " Unable to derive from a font (" << key << ") that doesn't exist" << std::endl;
+        fmt::print("[TIDE] Unable to derive from a font ({}) that doesn't exist\n", key);
         return false;
     }
     std::shared_ptr<FONT> font = fonts.at(key);
@@ -224,12 +224,12 @@ bool FONT_RENDERER::CloneFace(std::string key, std::string newKey, uint newFontS
 {
     if(fonts.count(key) == 0)
     {
-        std::cout << "[TIDE]" << " Unable to clone from a font (" << key << ") that doesn't exist" << std::endl;
+        fmt::print("[TIDE] Unable to clone from a font ({}) that doesn't exist\n", key);
         return false;
     }
     if(fonts.count(newKey) != 0)
     {
-        std::cout << "[TIDE]" << " Unable to replace an existing font (" << key << ") with a derived font" << std::endl;
+        fmt::print("[TIDE] Unable to replace an existing font ({}) with a derived font\n", key);
         return false;
     }
     std::shared_ptr<FONT> font = fonts.at(key);
@@ -246,7 +246,7 @@ bool FONT_RENDERER::CloneFace(std::string key, std::string newKey, uint newFontS
     return false;
 }
 
-void FONT_RENDERER::RenderCursor(float x, float y, float width, float height, COLOR color)
+void FONT_RENDERER::RenderCursor(float x, float y, float width, float height, float layer, COLOR color)
 {
     glUseProgram(program);
     glBindVertexArray(vao.handle);
@@ -264,23 +264,23 @@ void FONT_RENDERER::RenderCursor(float x, float y, float width, float height, CO
     UniformVec3(program, "color", color.vec);
 
     glUniform1i(glGetUniformLocation(program, "caret"), true);
-    glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -3.0);
+    glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -layer);
     glDrawArrays(GL_TRIANGLES, 0, 12);
 
     glBindVertexArray(0);
     glUseProgram(0);
 }
 
-bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color)
+bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, float layer, COLOR color)
 {
-    return RenderText(key, text, screenX, screenY, color, glm::vec2(0, INT32_MAX));
+    return RenderText(key, text, screenX, screenY, layer, color, glm::vec2(0, INT32_MAX));
 }
 
-bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color, glm::vec2 ssHorizontalCuttoff)
+bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, int screenY, float layer, COLOR color, glm::vec2 ssHorizontalCuttoff)
 {
     if(fonts.count(key) == 0)
     {
-        std::cout << "[TIDE]" << " Unable to render a font (" << key << ") that doesn't exist" << std::endl;
+        fmt::print("[TIDE] Unable to render a font ({}) that doesn't exist\n", key);
         return false;
     }
     std::shared_ptr<FONT> font = fonts.at(key);
@@ -302,8 +302,6 @@ bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, i
     float caret = 0.0;
     glm::vec3 scale((float) font->maxWidth, (float) font->maxHeight, 1.0);
 
-    float cursorX = 0.0;
-
     for(uint i = 0; i < text.length(); i++)
     {
         if(text[i] == '\t')
@@ -319,19 +317,14 @@ bool FONT_RENDERER::RenderText(std::string key, std::string text, int screenX, i
         }
         GLYPH ch = *font->glyphs.at(charInd);
         
-        float layer = (float) (i+1) / (text.length() + 1);
-        glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -2.0 + layer);
+        float microlayer = (float) (i+1) / (text.length() + 1);
+        glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -layer + microlayer);
 
         float hb = font->capitalBearingY - ch.bearingY - 1;
 
         float advance = ch.advance;
         float bearingX = ch.bearingX;
-        // Remove bearing from the first letter, so that it's aligned correctly with screenX.
-        // if(i == 0)
-        // {
-        //     advance -= bearingX;
-        //     bearingX = 0;
-        // }
+
         glm::vec3 translate((float) screenX + (caret + bearingX), (float) screenY + hb, 0.0);
 
         glm::mat4 transformation(1.0f);
@@ -360,14 +353,13 @@ float FONT_RENDERER::TextWidth(std::string key, std::string text)
 {
     if(fonts.count(key) == 0)
     {
-        std::cout << "[TIDE]" << " Unable to gauge the text width of a font (" << key << ") that doesn't exist" << std::endl;
+        fmt::print("[TIDE] Unable to gauge the text width of a font ({}) that doesn't exist\n", key);
         return -1;
     }
     std::shared_ptr<FONT> font = fonts.at(key);
 
-    uint len = text.length();
     float width = 0;
-    for(uint i = 0; i < len; i++)
+    for(uint i = 0; i < text.length(); i++)
     {
         if(text[i] == '\t')
         {
@@ -380,7 +372,6 @@ float FONT_RENDERER::TextWidth(std::string key, std::string text)
             continue;
         }
         GLYPH* ch = font->glyphs.at(charInd);
-        float preWidth = width;
 
         width += ch->advance;
     }

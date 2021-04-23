@@ -4,7 +4,7 @@
 #include "../types.h"
 #include "gfx.h"
 
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <ft2build.h>
@@ -29,7 +29,7 @@ struct GLYPH
 struct FONT
 {
     // map of glyph metrics+bitmap
-    std::map<uint, GLYPH*> glyphs;
+    std::unordered_map<uint, GLYPH*> glyphs;
 
     // FreeType
     FT_Face ftFace;
@@ -67,7 +67,7 @@ class FONT_RENDERER
 {
 
     private:
-        std::map<std::string, std::shared_ptr<FONT>> fonts;
+        std::unordered_map<std::string, std::shared_ptr<FONT>> fonts;
 
         VAO    vao;
         GLuint program;
@@ -80,7 +80,7 @@ class FONT_RENDERER
     public:
         FONT_RENDERER();
         ~FONT_RENDERER();
-        void RenderCursor(float x, float y, float width, float height, COLOR color);
+        void RenderCursor(float x, float y, float width, float height, float layer, COLOR color);
         /**
          * Loads a new fontface to the renderer at a certain size & creates the font glyphs.
          */
@@ -95,8 +95,8 @@ class FONT_RENDERER
          */
         bool CloneFace(std::string key, std::string newKey, uint newFontSize);
 
-        bool RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color);
-        bool RenderText(std::string key, std::string text, int screenX, int screenY, COLOR color, glm::vec2 screenspaceHorizontalCuttoff);
+        bool RenderText(std::string key, std::string text, int screenX, int screenY, float layer, COLOR color);
+        bool RenderText(std::string key, std::string text, int screenX, int screenY, float layer, COLOR color, glm::vec2 screenspaceHorizontalCuttoff);
         /**
          * Gauges the width of a string of text using a font in pixels.
          * @returns -1 if the font doesn't exist.

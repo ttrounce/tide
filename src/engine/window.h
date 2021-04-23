@@ -53,6 +53,7 @@ public:
     std::vector<key_listener> keyListeners;
     std::vector<char_listener> charListeners;
     std::vector<resize_listener> resizeListeners;
+    std::vector<resize_listener> resizeFrameBufferListeners;
 
     ENGINE(int initialWidth, int initialHeight, std::string title);
     ~ENGINE();

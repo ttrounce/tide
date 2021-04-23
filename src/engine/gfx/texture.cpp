@@ -2,7 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#include <iostream>
+#include <fmt/core.h>
 
 namespace tide
 {
@@ -43,7 +43,7 @@ bool CreateQuickTexture(GLuint target, GLuint* textureHandle, std::string path, 
 
     if(!data)
     {
-        std::cout << "[TIDE]" << " Unable to load texture due to an unknown error" << std::endl;
+        fmt::print("[TIDE] Unable to load texture due to an unknown error\n");
         return false;
     }
 
@@ -58,7 +58,7 @@ bool CreateQuickTexture(GLuint target, GLuint* textureHandle, std::string path, 
             format = GL_RGBA;
             break;
         default:
-            std::cout << "[TIDE]" << " Unable to load texture due to an unexpected pixel format" << std::endl;
+            fmt::print("[TIDE] Unable to load texture due to an unexpected pixel format\n");
             stbi_image_free(data);
             return false;
     }

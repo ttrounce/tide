@@ -10,6 +10,32 @@ typedef unsigned char      uchar;
 
 #include <glm/vec3.hpp>
 
+struct BOUNDS
+{
+    union
+    {
+        int arr[4];
+        struct
+        {
+            int x1, y1, x2, y2; 
+        };
+    };
+    BOUNDS(int a, int b, int c, int d) : x1(a), y1(b), x2(c), y2(d) {}
+};
+
+struct RECT
+{
+    union
+    {
+        int arr[4];
+        struct
+        {
+            int x, y, w, h; 
+        };
+    };
+    RECT(int a, int b, int c, int d) : x(a), y(b), w(c), h(d) {}
+};
+
 struct COLOR
 {
     glm::vec3 vec;

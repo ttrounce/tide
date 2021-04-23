@@ -1,5 +1,7 @@
 #include "io.h"
 
+#include <fmt/os.h>
+
 std::string ReadFile(std::string path)
 {
     FILE* file = fopen(path.c_str(), "rb");
@@ -7,7 +9,7 @@ std::string ReadFile(std::string path)
     if(file)
     {
         fseek(file, 0, SEEK_END);
-        int len = ftell(file);
+        size_t len = (size_t) ftell(file);
         fseek(file, 0, SEEK_SET);
 
         char* text = new char[len + 1];

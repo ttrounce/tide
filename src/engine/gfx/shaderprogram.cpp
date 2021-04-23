@@ -1,5 +1,5 @@
 #include "shaderprogram.h"
-#include <iostream>
+#include <fmt/core.h>
 
 namespace tide
 {
@@ -21,7 +21,7 @@ void CreateVertexShader(GLuint program, std::string source, GLint sourceLength)
         GLchar log[logSize];
         glGetShaderInfoLog(handle, logSize, &logSize, log);
 
-        std::cout << "[TIDE]" << " Vertex shader could not compile: " << std::endl << log << std::endl;
+        fmt::print("[TIDE] Vertex shader could not compile:\n{}\n", std::string(log));
 
         glDeleteShader(handle);
         return;
@@ -47,7 +47,7 @@ void CreateFragmentShader(GLuint program, std::string source, GLint sourceLength
         GLchar log[logSize];
         glGetShaderInfoLog(handle, logSize, &logSize, log);
 
-        std::cout << "[TIDE]" << " Fragment shader could not compile: " << std::endl << log << std::endl;
+        fmt::print("[TIDE] Fragment shader could not compile:\n{}\n", std::string(log));
 
         glDeleteShader(handle);
         return;
@@ -72,7 +72,7 @@ void LinkProgram(GLuint program)
         GLchar log[logSize];
         glGetProgramInfoLog(program, logSize, &logSize, log);
 
-        std::cout << "[TIDE]" << " Program couldn't link: " << std::endl << log << std::endl;
+        fmt::print("[TIDE] Program could not link:\n{}\n", std::string(log));
         glDeleteProgram(program);
     }
 }
