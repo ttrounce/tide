@@ -2,15 +2,13 @@
 #define TIDE_TEXT_PANEL_H
 
 #include "engine/types.h"
+#include "engine/gfx/font.h"
 #include <string>
 #include <vector>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
-namespace tide
-{
-
-enum INPUT_TYPE
+enum InputType
 {
     INPUT_WRITE,
 
@@ -31,14 +29,14 @@ enum INPUT_TYPE
     INPUT_SHIFT_RIGHT
 };
 
-class TEXT_PANEL
+class TextPanel
 {
 private:
     std::vector<std::string> lines;
-    
+
     glm::ivec2 GetCursorPixelPosition();
     glm::ivec2 GetPixelShiftBorder();
-    BOUNDS GetContentBounds();
+    Bounds GetContentBounds();
 
     void WriteChar(uint codepoint);
     int RemoveBackwardChar();
@@ -50,29 +48,44 @@ private:
     void MoveCursorLeft(int cursorX);
     void MoveCursorRight();
 public:
+    /**
+     * A wrapper around the text panel font, with some checking to avoid UB.
+     */
     struct {
         std::string fontName;
-        int fontSize;
-        int fontPadding;
+        int linePadding;
+        int GetFontSize() const
+        {
+            Shared<Font> fnt = fontRenderer->GetFont(this->fontName);
+            if(fnt)
+            {
+                return fnt->fontSize;
+            }
+            return 0;
+        }
         int GetLineHeight() const
         {
-            return (2*this->fontPadding + this->fontSize);
+            Shared<Font> fnt = fontRenderer->GetFont(this->fontName);
+            if(fnt)
+            {
+                return (2 * this->linePadding + (int)(fnt->ascender - fnt->descender));
+            }
+            return 0;
         }
     } fontParameters;
-    
+
     glm::ivec2 camera;
     glm::ivec2 cursor;
 
-    RECT panelRectangle;
+    Rect panelRectangle;
 
     bool isFocused;
 
-    TEXT_PANEL(RECT rect);
+    TextPanel(const Rect& rect);
 
     void Render();
-    void TakeInput(INPUT_TYPE type, uint codepoint);
+    void TakeInput(InputType type, uint codepoint);
 };
 
-}
 
 #endif // TIDE_TEXT_PANEL_H

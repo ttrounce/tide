@@ -12,10 +12,7 @@
 
 extern FT_Library library;
 
-namespace tide
-{
-
-struct GLYPH
+struct Glyph
 {
     uchar* bitmap;
     char charcode;
@@ -26,10 +23,10 @@ struct GLYPH
     float bearingY;
 };
 
-struct FONT
+struct Font
 {
     // map of glyph metrics+bitmap
-    std::unordered_map<uint, GLYPH*> glyphs;
+    std::unordered_map<uint, Glyph*> glyphs;
 
     // FreeType
     FT_Face ftFace;
@@ -41,16 +38,18 @@ struct FONT
     GLuint textureHandleGL;
 
     int fontSize;
-    
+
     // size specs
     int maxWidth;
     int maxHeight;
-    int capitalBearingY;
 
-    ~FONT()
+    float ascender;
+    float descender;
+
+    ~Font()
     {
         FT_Done_Face(ftFace);
-        for(auto it = glyphs.begin(); it != glyphs.end(); it++)
+        for (auto it = glyphs.begin(); it != glyphs.end(); it++)
         {
             free(it->second->bitmap);
             delete it->second;
@@ -63,49 +62,47 @@ struct FONT
 void InitFreeType();
 void FreeFreeType();
 
-class FONT_RENDERER
+class FontRenderer
 {
-
-    private:
-        std::unordered_map<std::string, std::shared_ptr<FONT>> fonts;
-
-        VAO    vao;
-        GLuint program;
-        std::string  fontpath;
-
-        bool LoadFTFace(std::string key, std::string filepath, uint fontSize);
-        bool LoadFontGlyphs(std::string key);
-        bool GenerateFontTextures(std::string key);
-
-    public:
-        FONT_RENDERER();
-        ~FONT_RENDERER();
-        void RenderCursor(float x, float y, float width, float height, float layer, COLOR color);
-        /**
+public:
+    FontRenderer();
+    ~FontRenderer();
+    void RenderCursor(float x, float y, float width, float height, float layer, Color color);
+    /**
          * Loads a new fontface to the renderer at a certain size & creates the font glyphs.
          */
-        bool LoadFace(std::string key, std::string filepath, int fontSize);
-        /**
+    bool LoadFace(const std::string& key, const std::string& filepath, int fontSize);
+    /**
          * Derives the same face at a different size & creates the new font glyphs.
          */
-        bool DeriveFace(std::string key, uint newFontSize);
+    bool DeriveFace(const std::string& key, uint newFontSize);
 
-        /**
+    /**
          * Derives the same face at a different size & stores it as a new font.
          */
-        bool CloneFace(std::string key, std::string newKey, uint newFontSize);
+    bool CloneFace(const std::string& key, const std::string& newKey, uint newFontSize);
 
-        bool RenderText(std::string key, std::string text, int screenX, int screenY, float layer, COLOR color);
-        bool RenderText(std::string key, std::string text, int screenX, int screenY, float layer, COLOR color, glm::vec2 screenspaceHorizontalCuttoff);
-        /**
+    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, Color color);
+    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, Color color, glm::vec2 screenspaceHorizontalCuttoff);
+    /**
          * Gauges the width of a string of text using a font in pixels.
          * @returns -1 if the font doesn't exist.
          */
-        float TextWidth(std::string key, std::string text);
+    float TextWidth(const std::string& key, const std::string& text);
+
+    Shared<Font> GetFont(const std::string& key);
+private:
+    std::unordered_map<std::string, Shared<Font>> fonts;
+
+    VAO vao;
+    GLuint program;
+    std::string fontpath;
+
+    bool LoadFTFace(const std::string& key, const std::string& filepath, uint fontSize);
+    bool LoadFontGlyphs(const std::string& key);
+    bool GenerateFontTextures(const std::string& key);
 };
 
-extern std::unique_ptr<FONT_RENDERER> fontRenderer;
-
-}
+extern Unique<FontRenderer> fontRenderer;
 
 #endif // VHM_FONT_H

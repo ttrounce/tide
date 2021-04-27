@@ -1,8 +1,5 @@
 #include "vao.h"
 
-namespace tide
-{
-
 void SetBuffer(VAO& vao, int index, int size, float* data, int len)
 {
     GLuint buffer;
@@ -12,6 +9,4 @@ void SetBuffer(VAO& vao, int index, int size, float* data, int len)
     glVertexAttribPointer(index, size, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(index);
     vao.buffers.push_back(buffer);
-}
-
 }

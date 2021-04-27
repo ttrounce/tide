@@ -1,9 +1,8 @@
 #include "model.h"
 
-namespace tide
-{
 
-std::shared_ptr<tide::VAO> modelQuad;
+
+Shared<VAO> modelQuad;
 
 void InitialisePrefab()
 {
@@ -14,11 +13,9 @@ void InitialisePrefab()
         0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0
     };
 
-    modelQuad = std::make_shared<tide::VAO>();
+    modelQuad = std::make_shared<VAO>();
     glGenVertexArrays(1, &modelQuad->handle);
     glBindVertexArray(modelQuad->handle);
     SetBuffer(*modelQuad.get(), 0, 2, vertsQuad, 12);
     SetBuffer(*modelQuad.get(), 1, 2, texesQuad, 12);
-}
-
 }

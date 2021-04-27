@@ -6,8 +6,9 @@
 
 #include "engine/gfx/font.h"
 #include "engine/gfx/gfx.h"
-#include "textpanel.h"
+#include "textpanel/textpanel.h"
 #include "prefab/model.h"
+#include "textpanel/textpanelcontainer.h"
 #include "engine/types.h"
 
 void Update(double t, double dt)
@@ -15,79 +16,83 @@ void Update(double t, double dt)
 
 }
 
-tide::TEXT_PANEL* panel;
+Unique<TextPanelContainer> baseContainer;
 
 void Draw()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0, 0, 0, 1);
 
-    panel->Render();
+    baseContainer->RenderAll();
 
-    std::string fpsText = fmt::format("{}fps", engine->window->fps);
-    tide::fontRenderer->RenderText("hack", fpsText, engine->GetWindowWidth()  - tide::fontRenderer->TextWidth("hack", fpsText), panel->fontParameters.fontPadding, 2, COLOR(0xFFFFFF));
-    
-    std::string mouseText = fmt::format("{:.0f}:{:.0f}", engine->window->mouse->pos.x, engine->window->mouse->pos.y);
-    tide::fontRenderer->RenderText("hack", mouseText, engine->GetFrameBufferWidth() - tide::fontRenderer->TextWidth("hack", mouseText), panel->fontParameters.fontPadding + panel->fontParameters.GetLineHeight(), 2, COLOR(0xFFFFFF));
+    std::string fpsText = fmt::format("{:.1f}ms {}fps", engine->window->frameTime, engine->window->fps);
+    fontRenderer->RenderText("hack", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", fpsText), 2, 2, Color(0xFFFFFF));
 
-    std::string cursorString = fmt::format("{}:{}", panel->cursor.x, panel->cursor.y);
-    tide::fontRenderer->RenderText("hack", cursorString, engine->GetWindowWidth() - tide::fontRenderer->TextWidth("hack", cursorString), engine->GetFrameBufferHeight() - panel->fontParameters.GetLineHeight() + panel->fontParameters.fontPadding, 2, COLOR(0x000000));
+    // std::string mouseText = fmt::format("{:.0f}:{:.0f}", engine->window->mouse->pos.x, engine->window->mouse->pos.y);
+    // fontRenderer->RenderText("hack", mouseText, engine->GetFrameBufferWidth() - fontRenderer->TextWidth("hack", mouseText), panel->fontParameters.linePadding + panel->fontParameters.GetLineHeight(), 2, Color(0xFFFFFF));
+
+    // std::string cursorString = fmt::format("{}:{}", panel->cursor.x, panel->cursor.y);
+    // fontRenderer->RenderText("hack", cursorString, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", cursorString), engine->GetFrameBufferHeight() - panel->fontParameters.GetLineHeight() + panel->fontParameters.linePadding, 2, Color(0x000000));
 }
 
 void OnCharAction(uint codepoint)
 {
-    panel->TakeInput(tide::INPUT_WRITE, codepoint);
+    baseContainer->TakeInput(INPUT_WRITE, codepoint);
 }
 
 void OnKeyAction(int key, int action, int scancode)
 {
-    if(action == GLFW_PRESS || action == GLFW_REPEAT)
+    if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
-        if(key == GLFW_KEY_BACKSPACE)
+        if(key == GLFW_KEY_F1)
         {
-            panel->TakeInput(tide::INPUT_REMOVE_BACK, 0);
+            baseContainer->SwitchWindowFocus();
         }
-        if(key == GLFW_KEY_DELETE)
+        if (key == GLFW_KEY_BACKSPACE)
         {
-            panel->TakeInput(tide::INPUT_REMOVE_FWRD, 0);
+            baseContainer->TakeInput(INPUT_REMOVE_BACK, 0);
         }
-        if(key == GLFW_KEY_TAB)
+        if (key == GLFW_KEY_DELETE)
         {
-            panel->TakeInput(tide::INPUT_WRITE, '\t');
+            baseContainer->TakeInput(INPUT_REMOVE_FWRD, 0);
         }
-        if(key == GLFW_KEY_ENTER)
+        if (key == GLFW_KEY_TAB)
         {
-            panel->TakeInput(tide::INPUT_NEW_LINE, 0);
+            baseContainer->TakeInput(INPUT_WRITE, '\t');
         }
-        if(key == GLFW_KEY_UP)
+        if (key == GLFW_KEY_ENTER)
         {
-            panel->TakeInput(tide::INPUT_MOVE_UP, 0);
+            baseContainer->TakeInput(INPUT_NEW_LINE, 0);
         }
-        if(key == GLFW_KEY_DOWN)
+        if (key == GLFW_KEY_UP)
         {
-            panel->TakeInput(tide::INPUT_MOVE_DOWN, 0);
+            baseContainer->TakeInput(INPUT_MOVE_UP, 0);
         }
-        if(key == GLFW_KEY_LEFT)
+        if (key == GLFW_KEY_DOWN)
         {
-            panel->TakeInput(tide::INPUT_MOVE_LEFT, 0);
+            baseContainer->TakeInput(INPUT_MOVE_DOWN, 0);
         }
-        if(key == GLFW_KEY_RIGHT)
+        if (key == GLFW_KEY_LEFT)
         {
-            panel->TakeInput(tide::INPUT_MOVE_RIGHT, 0);
+            baseContainer->TakeInput(INPUT_MOVE_LEFT, 0);
+        }
+        if (key == GLFW_KEY_RIGHT)
+        {
+            baseContainer->TakeInput(INPUT_MOVE_RIGHT, 0);
         }
     }
 }
 
 int main()
-{   
-    engine = std::make_unique<tide::ENGINE>(800, 600, "T.IDE");
-    if(engine->GetStatus())
+{
+    CreateEngine(800, 600, "T.IDE");
+    if (engine->GetStatus())
     {
+        engine->window->frameRateTarget = 60;
         engine->charListeners.push_back(OnCharAction);
         engine->keyListeners.push_back(OnKeyAction);
-        engine->resizeFrameBufferListeners.push_back([](int width, int height){
-            panel->panelRectangle.w = width;
-            panel->panelRectangle.h = height;
+        engine->resizeFrameBufferListeners.push_back([](int width, int height) {
+            baseContainer->UpdateFrameSize({0, 0, width, height});
         });
 
         glEnable(GL_BLEND);
@@ -96,18 +101,23 @@ int main()
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
 
-        tide::InitFreeType();
-        tide::InitialisePrefab();
-        tide::fontRenderer->LoadFace("hack", "hack.ttf", 16);
+        InitFreeType();
+        InitialisePrefab();
+        fontRenderer->LoadFace("hack", "hack.ttf", 16);
 
-        panel = new tide::TEXT_PANEL(RECT(0, 0, engine->GetFrameBufferWidth(), engine->GetFrameBufferHeight()));
+        Unique<TextPanel> panel = std::make_unique<TextPanel>(Rect(0, 0, 800, 600));
+        panel->fontParameters = { "hack", 2 };
         panel->isFocused = true;
+
+        baseContainer = std::make_unique<TextPanelContainer>(std::move(panel));
+        baseContainer->SplitVertical();
+
         engine->Start(Update, Draw);
     }
     else
     {
         fmt::print("[TIDE] Engine failed to build\n");
     }
-    delete panel;
-    tide::FreeFreeType();
+
+    FreeFreeType();
 }

@@ -4,24 +4,23 @@ project(tide)
 set(PROJECT_LIB tide_lib)
 set(PROJECT_TESTS tide_tests)
 
-
 if(BUILD_TYPE EQUAL 0)
     # Debug
     message("[BUILD TYPE] Debug")
     set(CMAKE_BUILD_TYPE "Debug")
-    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall -Werror -g")
+    set(CMAKE_CXX_FLAGS "-std=gnu++17 -Wall -Werror -g")
     set(BUILD_TESTS "OFF")
 elseif(BUILD_TYPE EQUAL 1)
     # Release
     message("[BUILD TYPE] Release (With Tests)")
     set(CMAKE_BUILD_TYPE "Release")
-    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall -O3")
+    set(CMAKE_CXX_FLAGS "-std=gnu++17 -Wall -O3")
     set(BUILD_TESTS "ON")
 elseif(BUILD_TYPE EQUAL 2)
     # Release (No Tests)
     message("[BUILD TYPE] Release (No Tests)")
     set(CMAKE_BUILD_TYPE "Release")
-    set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wno-error=conversion -Werror -Wall -O3")
+    set(CMAKE_CXX_FLAGS "-std=gnu++17 -Wno-error=conversion -Werror -Wall -O3")
 endif()
 
 # Sources and Includes
@@ -56,7 +55,7 @@ target_link_libraries(${PROJECT_LIB} glm)
 target_link_libraries(${PROJECT_LIB} fmt)
 target_include_directories(${PROJECT_LIB} PUBLIC src)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} WIN32 src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 
 add_custom_command(

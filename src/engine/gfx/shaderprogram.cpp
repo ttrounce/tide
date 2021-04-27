@@ -1,10 +1,7 @@
 #include "shaderprogram.h"
 #include <fmt/core.h>
 
-namespace tide
-{
-
-void CreateVertexShader(GLuint program, std::string source, GLint sourceLength)
+void CreateVertexShader(GLuint program, const std::string& source, GLint sourceLength)
 {
     const char* trueSource = source.c_str();
     GLuint handle = glCreateShader(GL_VERTEX_SHADER);
@@ -13,7 +10,7 @@ void CreateVertexShader(GLuint program, std::string source, GLint sourceLength)
 
     GLint success = 0;
     glGetShaderiv(handle, GL_COMPILE_STATUS, &success);
-    if(success == GL_FALSE)
+    if (success == GL_FALSE)
     {
         GLint logSize = 0;
         glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &logSize);
@@ -30,7 +27,7 @@ void CreateVertexShader(GLuint program, std::string source, GLint sourceLength)
     glDeleteShader(handle);
 }
 
-void CreateFragmentShader(GLuint program, std::string source, GLint sourceLength)
+void CreateFragmentShader(GLuint program, const std::string& source, GLint sourceLength)
 {
     const char* trueSource = source.c_str();
     GLuint handle = glCreateShader(GL_FRAGMENT_SHADER);
@@ -39,7 +36,7 @@ void CreateFragmentShader(GLuint program, std::string source, GLint sourceLength
 
     GLint success = 0;
     glGetShaderiv(handle, GL_COMPILE_STATUS, &success);
-    if(success == GL_FALSE)
+    if (success == GL_FALSE)
     {
         GLint logSize = 0;
         glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &logSize);
@@ -61,10 +58,10 @@ void LinkProgram(GLuint program)
 {
     glLinkProgram(program);
     glValidateProgram(program);
-    
+
     GLint success = 0;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if(success == GL_FALSE)
+    if (success == GL_FALSE)
     {
         GLint logSize = 0;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
@@ -72,39 +69,37 @@ void LinkProgram(GLuint program)
         GLchar log[logSize];
         glGetProgramInfoLog(program, logSize, &logSize, log);
 
-        fmt::print("[TIDE] Program could not link:\n{}\n", std::string(log));
+        fmt::print("Program could not link:\n{}\n", std::string(log));
         glDeleteProgram(program);
     }
 }
 
-void UniformVec2(GLuint program, std::string name, glm::vec2 vec)
+void UniformVec2(GLuint program, const std::string& name, const glm::vec2& vec)
 {
     glUniform2f(glGetUniformLocation(program, name.c_str()), vec[0], vec[1]);
 }
 
-void UniformVec3(GLuint program, std::string name, glm::vec3 vec)
+void UniformVec3(GLuint program, const std::string& name, const glm::vec3& vec)
 {
     glUniform3f(glGetUniformLocation(program, name.c_str()), vec[0], vec[1], vec[2]);
 }
 
-void UniformVec4(GLuint program, std::string name, glm::vec4 vec)
+void UniformVec4(GLuint program, const std::string& name, const glm::vec4& vec)
 {
     glUniform4f(glGetUniformLocation(program, name.c_str()), vec[0], vec[1], vec[2], vec[3]);
 }
 
-void UniformMat2(GLuint program, std::string name, glm::mat2 value)
+void UniformMat2(GLuint program, const std::string& name, const glm::mat2& value)
 {
     glUniformMatrix2fv(glGetUniformLocation(program, name.c_str()), 1, false, &value[0][0]);
 }
 
-void UniformMat3(GLuint program, std::string name, glm::mat3 value)
+void UniformMat3(GLuint program, const std::string& name, const glm::mat3& value)
 {
     glUniformMatrix3fv(glGetUniformLocation(program, name.c_str()), 1, false, &value[0][0]);
 }
 
-void UniformMat4(GLuint program, std::string name, glm::mat4 value)
+void UniformMat4(GLuint program, const std::string& name, const glm::mat4& value)
 {
     glUniformMatrix4fv(glGetUniformLocation(program, name.c_str()), 1, false, &value[0][0]);
-}
-
 }

@@ -5,10 +5,15 @@
 #include "window.h"
 #include <memory>
 
-extern std::unique_ptr<tide::ENGINE> engine;
+extern Unique<Engine> engine;
 
 #ifdef TIDE_ENGINE_IMPLEMENTATION
-std::unique_ptr<tide::ENGINE> engine;
+Unique<Engine> engine;
 #endif // TIDE_MAKE_ENGINE
+
+inline void CreateEngine(int width, int height, const std::string& title)
+{
+    engine = std::make_unique<Engine>(width, height, title);
+}
 
 #endif // TIDE_ENGINE_H

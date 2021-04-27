@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# Vulkan
+vulkan/
+
 # Editor
 .idea/
 .vscode/

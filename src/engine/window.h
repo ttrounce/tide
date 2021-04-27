@@ -10,15 +10,12 @@
 #include <vector>
 #include <memory>
 
-namespace tide
-{
-
-struct KEYBOARD
+struct Keyboard
 {
     bool keys[GLFW_KEY_LAST];
 };
 
-struct MOUSE
+struct Mouse
 {
     bool buttons[GLFW_MOUSE_BUTTON_LAST];
     glm::vec2 delta;
@@ -26,16 +23,20 @@ struct MOUSE
     glm::vec2 lastPos;
 };
 
-struct WINDOW
+struct Window
 {
     GLFWwindow* handle;
 
-    std::unique_ptr<KEYBOARD> keyboard;
-    std::unique_ptr<MOUSE>    mouse;
+    Unique<Keyboard> keyboard;
+    Unique<Mouse>    mouse;
 
+    bool iconified;
     uint fps;
+    double frameTime;
 
-    WINDOW()
+    int frameRateTarget;
+
+    Window()
     {
         this->fps = 0;
     }
@@ -45,18 +46,18 @@ typedef void (*key_listener)(int, int, int);
 typedef void (*char_listener)(uint);
 typedef void (*resize_listener)(int, int);
 
-class ENGINE
+class Engine
 {
     bool success;
 public:
-    std::unique_ptr<WINDOW> window;
+    Unique<Window> window;
     std::vector<key_listener> keyListeners;
     std::vector<char_listener> charListeners;
     std::vector<resize_listener> resizeListeners;
     std::vector<resize_listener> resizeFrameBufferListeners;
 
-    ENGINE(int initialWidth, int initialHeight, std::string title);
-    ~ENGINE();
+    Engine(int initialWidth, int initialHeight, const std::string& title);
+    ~Engine();
 
     void Start(void (*update)(double, double), void (*draw)());
     bool GetStatus()
@@ -89,6 +90,6 @@ public:
     }
 };
 
-}
+
 
 #endif // TIDE_WINDOW_H

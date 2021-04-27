@@ -4,9 +4,6 @@
 #include <glad/glad.h>
 #include <vector>
 
-namespace tide
-{
-
 struct VAO
 {
     GLuint handle;
@@ -20,7 +17,5 @@ struct VAO
 };
 
 void SetBuffer(VAO& vao, int index, int size, float* data, int len);
-
-}
 
 #endif // TIDE_VAO_H
