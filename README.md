@@ -1,6 +1,6 @@
 # T.IDE
 
-A work-in-progress C++ code-editor.
+A work-in-progress mulit-language code-editor written in C++.
 
 ## Dependencies
 
@@ -14,6 +14,8 @@ A work-in-progress C++ code-editor.
 - [glfw/glfw](https://github.com/glfw/glfw) ([License](https://github.com/glfw/glfw/blob/master/LICENSE.md))
 #### Testing
 - [google/googletest](https://github.com/google/googletest) ([License](https://github.com/google/googletest/blob/master/LICENSE))
+#### Other
+- [fmtlib/fmt](https://github.com/fmtlib/fmt) ([License](https://github.com/fmtlib/fmt/blob/master/LICENSE.rst))
 
 ## License
 
