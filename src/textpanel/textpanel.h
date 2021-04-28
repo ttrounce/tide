@@ -56,7 +56,7 @@ public:
         int linePadding;
         int GetFontSize() const
         {
-            Shared<Font> fnt = fontRenderer->GetFont(this->fontName);
+            const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
             if(fnt)
             {
                 return fnt->fontSize;
@@ -65,7 +65,7 @@ public:
         }
         int GetLineHeight() const
         {
-            Shared<Font> fnt = fontRenderer->GetFont(this->fontName);
+            const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
             if(fnt)
             {
                 return (2 * this->linePadding + (int)(fnt->ascender - fnt->descender));

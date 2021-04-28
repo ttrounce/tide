@@ -3,6 +3,16 @@
 #include <utility>
 #include <vector>
 
+TextPanelContainer* TextPanelContainer::GetFirstChild()
+{
+    return this->firstContainer.get();
+}
+
+TextPanelContainer* TextPanelContainer::GetSecondChild()
+{
+    return this->secondContainer.get();
+}
+
 TextPanelContainer::TextPanelContainer(Unique<TextPanel> panel) : panel(std::move(panel)), containerType(NONE)
 {}
 
@@ -53,7 +63,7 @@ void TextPanelContainer::SplitVertical()
         this->containerType = VERTICAL;
 
         Rect rectMain = panel->panelRectangle;
-        Rect rectOther = Rect(0, 0, 0, 0);
+        Rect rectOther{0, 0, 0, 0};
         
         this->panel->panelRectangle = { rectMain.x, rectMain.y, rectMain.w / 2, rectMain.h };
         rectOther = { rectMain.x + rectMain.w / 2, rectMain.y, rectMain.w / 2, rectMain.h };
@@ -71,7 +81,7 @@ void TextPanelContainer::SplitHorizontal()
         this->containerType = HORIZONTAL;
 
         Rect rectMain = panel->panelRectangle;
-        Rect rectOther = Rect(0, 0, 0, 0);
+        Rect rectOther{0, 0, 0, 0};
 
         this->panel->panelRectangle = { rectMain.x, rectMain.y, rectMain.w, rectMain.h / 2 };
         rectOther = { rectMain.x, rectMain.y + rectMain.h / 2, rectMain.w, rectMain.h / 2 };
@@ -92,16 +102,16 @@ void TextPanelContainer::SwitchWindowFocus()
     this->CollectChildren(tempContainers);
 
     int index = 0;
-    for(auto i = tempContainers.begin(); i != tempContainers.end(); i++, index++)
+    for(auto& e : tempContainers)
     {
-        if((*i)->panel->isFocused)
+        if(e->panel->isFocused)
         {
             tempContainers.at(index)->panel->isFocused = false;
             tempContainers.at((index + 1) % tempContainers.size())->panel->isFocused = true;
-            break;
+            break; 
         }
+        index++;
     }
-
 }
 
 void TextPanelContainer::TakeInput(InputType type, uint codepoint)

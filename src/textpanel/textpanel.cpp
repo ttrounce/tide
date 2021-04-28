@@ -185,52 +185,61 @@ void TextPanel::MoveCursorRight()
     }
 }
 
+#include <iostream>
+#include <chrono>
+#include <fmt/chrono.h>
+
 void TextPanel::Render()
 {
-    int lineNumber = 0;
+    const Bounds& contentBounds = GetContentBounds();
+    const int totalLineHeight = fontParameters.GetLineHeight();
+    const int totalLineCount = lines.size();
 
-    int offsetLnNumbers = (glm::floor(log10(lines.size())) + 1) * fontParameters.GetFontSize();
+    int offsetLnNumbers = (glm::floor(log10(totalLineCount)) + 1) * fontParameters.GetFontSize();
 
-    int totalLineHeight = fontParameters.GetLineHeight();
+    int lineStart = glm::max<int>(0, (-contentBounds.y1 - camera.y) / totalLineHeight);
+    int lineEnd = glm::min<int>(totalLineCount, ((contentBounds.y2 - contentBounds.y1) - camera.y) / totalLineHeight);
+    int lineNumber = lineStart;
 
-    for (auto it = lines.begin(); it != lines.end(); it++, lineNumber++)
+    fontRenderer->RenderCursor(panelRectangle.x, contentBounds.y2, panelRectangle.w, totalLineHeight, 1.0, Color(0xFFFFFF));
+    fontRenderer->RenderText(fontParameters.fontName, "textpanel2.cpp", panelRectangle.x, contentBounds.y2 + fontParameters.linePadding, 2, Color(0x000000));
+
+    for(auto i = lines.begin() + lineStart; i != lines.begin() + lineEnd; i++, lineNumber++)
     {
-        std::string& originalLine = *it;
+        const auto& line = *i;
 
-        int lineY = GetContentBounds().y1 + (lineNumber * totalLineHeight) + camera.y;
+        int lineY = contentBounds.y1 + (lineNumber * totalLineHeight) + camera.y;
         int textY = fontParameters.linePadding + lineY;
         int textX = GetContentBounds().x1 + camera.x;
 
         // cull lines outside of content bounds
-        if (lineY < GetContentBounds().y1 || lineY >= GetContentBounds().y2 || lineY + fontParameters.GetLineHeight() > GetContentBounds().y2)
+        if (lineY < contentBounds.y1 || lineY >= contentBounds.y2 || lineY + totalLineHeight > contentBounds.y2)
             continue;
 
-        // Render panel header
-        fontRenderer->RenderCursor(panelRectangle.x, GetContentBounds().y2, panelRectangle.w, fontParameters.GetLineHeight(), 1.0, Color(0xFFFFFF));
-        fontRenderer->RenderText(fontParameters.fontName, "textpanel2.cpp", panelRectangle.x, GetContentBounds().y2 + fontParameters.linePadding, 2, Color(0x000000));
+        // // Render panel header
 
-        // Render the base line-selector first for transparency. 
+        // // Render the base line-selector first for transparency. 
         std::string lineString = fmt::format("{}", lineNumber + 1);
         if (lineNumber == cursor.y && isFocused)
         {
             // Render line-selector
-            fontRenderer->RenderCursor(GetContentBounds().x1, textY - fontParameters.linePadding, panelRectangle.w - GetContentBounds().x1, totalLineHeight, 1, Color(0x141414));
+            fontRenderer->RenderCursor(contentBounds.x1, textY - fontParameters.linePadding, panelRectangle.w - contentBounds.x1, totalLineHeight, 1, Color(0x141414));
             // Render the line number, with the highlight
-            fontRenderer->RenderText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0xFF0000));
+            fontRenderer->RenderText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0xFFFFFF));
         }
         else
         {
             // Render the line number, without the highlight
             fontRenderer->RenderText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0x444444));
         }
-
+        
         // Render the line text
-        fontRenderer->RenderText(fontParameters.fontName, originalLine, textX, textY, 2, Color(0xFFFFFF), glm::vec2(GetContentBounds().x1, GetContentBounds().x2));
+        fontRenderer->RenderText(fontParameters.fontName, line, textX, textY, 2, Color(0xFFFFFF), glm::vec2(GetContentBounds().x1, GetContentBounds().x2));
 
         // Render the cursor on top of everything.
         if (lineNumber == cursor.y && isFocused)
         {
-            std::string leftText = (originalLine).substr(0, cursor.x);
+            std::string leftText = line.substr(0, cursor.x);
 
             int cursorRenderX = textX + fontRenderer->TextWidth(fontParameters.fontName, leftText);
             int cursorRenderY = textY - fontParameters.linePadding;

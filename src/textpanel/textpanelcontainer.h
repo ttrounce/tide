@@ -17,11 +17,14 @@ class TextPanelContainer
 {
 private:
     void CollectChildren(std::vector<TextPanelContainer*>& collection);
-public:
     Shared<TextPanelContainer> firstContainer;
     Shared<TextPanelContainer> secondContainer;
+public:
     Unique<TextPanel> panel;
     PanelContainerType containerType;
+
+    TextPanelContainer* GetFirstChild();
+    TextPanelContainer* GetSecondChild();
 
     TextPanelContainer(Unique<TextPanel> panel);
 

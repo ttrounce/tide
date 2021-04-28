@@ -25,8 +25,8 @@ void Draw()
 
     baseContainer->RenderAll();
 
-    std::string fpsText = fmt::format("{:.1f}ms {}fps", engine->window->frameTime, engine->window->fps);
-    fontRenderer->RenderText("hack", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", fpsText), 2, 2, Color(0xFFFFFF));
+    std::string fpsText = fmt::format("{:.1f}us {}fps", engine->window->frameTime, engine->window->fps);
+    fontRenderer->RenderText("hack", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", fpsText), 2, 2, Color{0xFFFFFF});
 
     // std::string mouseText = fmt::format("{:.0f}:{:.0f}", engine->window->mouse->pos.x, engine->window->mouse->pos.y);
     // fontRenderer->RenderText("hack", mouseText, engine->GetFrameBufferWidth() - fontRenderer->TextWidth("hack", mouseText), panel->fontParameters.linePadding + panel->fontParameters.GetLineHeight(), 2, Color(0xFFFFFF));
@@ -82,13 +82,12 @@ void OnKeyAction(int key, int action, int scancode)
         }
     }
 }
-
 int main()
 {
-    CreateEngine(800, 600, "T.IDE");
+    engine = std::make_unique<Engine>(800, 600, "T.IDE");
     if (engine->GetStatus())
     {
-        engine->window->frameRateTarget = 60;
+        engine->window->frameRateTarget = 10000;
         engine->charListeners.push_back(OnCharAction);
         engine->keyListeners.push_back(OnKeyAction);
         engine->resizeFrameBufferListeners.push_back([](int width, int height) {
@@ -105,12 +104,13 @@ int main()
         InitialisePrefab();
         fontRenderer->LoadFace("hack", "hack.ttf", 16);
 
-        Unique<TextPanel> panel = std::make_unique<TextPanel>(Rect(0, 0, 800, 600));
+        Unique<TextPanel> panel = std::make_unique<TextPanel>(Rect{0, 0, 800, 600});
         panel->fontParameters = { "hack", 2 };
         panel->isFocused = true;
 
         baseContainer = std::make_unique<TextPanelContainer>(std::move(panel));
-        baseContainer->SplitVertical();
+        baseContainer->SplitHorizontal();
+        baseContainer->GetSecondChild()->SplitVertical();
 
         engine->Start(Update, Draw);
     }

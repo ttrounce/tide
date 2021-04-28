@@ -9,13 +9,9 @@ struct VAO
     GLuint handle;
     std::vector<GLuint> buffers;
 
-    ~VAO()
-    {
-        glDeleteVertexArrays(1, &handle);
-        glDeleteBuffers(buffers.size(), &buffers[0]);
-    }
+    ~VAO();
 };
 
-void SetBuffer(VAO& vao, int index, int size, float* data, int len);
+void SetBuffer(VAO& vao, int index, int size, const std::vector<float>& data);
 
 #endif // TIDE_VAO_H

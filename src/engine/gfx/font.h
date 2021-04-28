@@ -46,17 +46,7 @@ struct Font
     float ascender;
     float descender;
 
-    ~Font()
-    {
-        FT_Done_Face(ftFace);
-        for (auto it = glyphs.begin(); it != glyphs.end(); it++)
-        {
-            free(it->second->bitmap);
-            delete it->second;
-        }
-        glyphs.clear();
-        glDeleteTextures(1, &textureHandleGL);
-    }
+    ~Font();
 };
 
 void InitFreeType();
@@ -67,7 +57,7 @@ class FontRenderer
 public:
     FontRenderer();
     ~FontRenderer();
-    void RenderCursor(float x, float y, float width, float height, float layer, Color color);
+    void RenderCursor(float x, float y, float width, float height, float layer, const Color& color);
     /**
          * Loads a new fontface to the renderer at a certain size & creates the font glyphs.
          */
@@ -82,8 +72,8 @@ public:
          */
     bool CloneFace(const std::string& key, const std::string& newKey, uint newFontSize);
 
-    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, Color color);
-    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, Color color, glm::vec2 screenspaceHorizontalCuttoff);
+    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color);
+    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color, const glm::vec2& screenspaceHorizontalCuttoff);
     /**
          * Gauges the width of a string of text using a font in pixels.
          * @returns -1 if the font doesn't exist.

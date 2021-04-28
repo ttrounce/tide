@@ -7,6 +7,9 @@
 #include <chrono>
 #include <thread>
 
+Window::Window() : fps(0)
+{}
+
 static void ErrorCallbackGLFW(int error, const char* description)
 {
     fmt::print("[TIDE] {}\n", description);
@@ -39,7 +42,7 @@ Engine::Engine(int initialWidth, int initialHeight, const std::string& title)
     window->keyboard = std::make_unique<Keyboard>();
     window->mouse = std::make_unique<Mouse>();
     window->fps = 0.0;
-    window->frameRateTarget = 144;
+    window->frameRateTarget = 60;
 
     for (int i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++)
     {
@@ -89,11 +92,11 @@ Engine::Engine(int initialWidth, int initialHeight, const std::string& title)
 
 using namespace std::chrono_literals;
 
-void Engine::Start(void (*update)(double, double), void (*draw)())
+void Engine::Start(update_func update, draw_func draw)
 {
 
-    auto const timeStart = std::chrono::high_resolution_clock::now();
-    auto const timeWait = std::chrono::milliseconds{ 1 };
+    const auto timeStart = std::chrono::high_resolution_clock::now();
+    const auto timeWait = 1ms;
     auto timeNext = timeStart + timeWait;
 
     std::chrono::duration<double> frameAccumulator;
@@ -107,7 +110,7 @@ void Engine::Start(void (*update)(double, double), void (*draw)())
     while (!glfwWindowShouldClose(window->handle))
     {
         auto then = std::chrono::high_resolution_clock::now();
-        std::this_thread::sleep_until(timeNext);
+        // std::this_thread::sleep_until(timeNext);
 
         draw();
         glfwPollEvents();
@@ -133,7 +136,7 @@ void Engine::Start(void (*update)(double, double), void (*draw)())
         }
 
         auto timeElapsed = (std::chrono::high_resolution_clock::now() - then);
-        window->frameTime = std::chrono::duration_cast<std::chrono::milliseconds>(timeElapsed).count();
+        window->frameTime = std::chrono::duration_cast<std::chrono::microseconds>(timeElapsed).count();
         auto frameDuration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(1.0 / (double)window->frameRateTarget));
         timeNext += frameDuration;
     }
@@ -192,6 +195,39 @@ void Engine::Start(void (*update)(double, double), void (*draw)())
 //         glfwSwapBuffers(window->handle);
 //     }
 // }
+
+bool Engine::GetStatus()
+{
+    return success;
+}
+
+int Engine::GetWindowWidth()
+{
+    int width;
+    glfwGetWindowSize(window->handle, &width, NULL);
+    return width;
+}
+
+int Engine::GetWindowHeight()
+{
+    int height;
+    glfwGetWindowSize(window->handle, NULL, &height);
+    return height;
+}
+
+int Engine::GetFrameBufferWidth()
+{
+    int width;
+    glfwGetFramebufferSize(window->handle, &width, NULL);
+    return width;
+}
+
+int Engine::GetFrameBufferHeight()
+{
+    int height;
+    glfwGetFramebufferSize(window->handle, NULL, &height);
+    return height;
+}
 
 Engine::~Engine()
 {

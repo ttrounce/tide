@@ -4,6 +4,8 @@ project(tide)
 set(PROJECT_LIB tide_lib)
 set(PROJECT_TESTS tide_tests)
 
+set(CMAKE_CXX_STANDARD 17)
+
 if(BUILD_TYPE EQUAL 0)
     # Debug
     message("[BUILD TYPE] Debug")
@@ -55,7 +57,7 @@ target_link_libraries(${PROJECT_LIB} glm)
 target_link_libraries(${PROJECT_LIB} fmt)
 target_include_directories(${PROJECT_LIB} PUBLIC src)
 
-add_executable(${PROJECT_NAME} WIN32 src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 
 add_custom_command(

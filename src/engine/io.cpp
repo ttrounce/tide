@@ -1,7 +1,5 @@
 #include "io.h"
 
-#include <fmt/os.h>
-
 std::string ReadFile(const std::string& path)
 {
     FILE* file = fopen(path.c_str(), "rb");

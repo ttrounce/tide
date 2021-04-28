@@ -11,9 +11,5 @@ extern Unique<Engine> engine;
 Unique<Engine> engine;
 #endif // TIDE_MAKE_ENGINE
 
-inline void CreateEngine(int width, int height, const std::string& title)
-{
-    engine = std::make_unique<Engine>(width, height, title);
-}
 
 #endif // TIDE_ENGINE_H

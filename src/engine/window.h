@@ -36,19 +36,18 @@ struct Window
 
     int frameRateTarget;
 
-    Window()
-    {
-        this->fps = 0;
-    }
+    Window();
 };
 
-typedef void (*key_listener)(int, int, int);
-typedef void (*char_listener)(uint);
-typedef void (*resize_listener)(int, int);
+using key_listener = void (*)(int, int, int);
+using char_listener = void (*)(uint);
+using resize_listener = void (*)(int, int);
+
+using update_func = void (*)(double, double);
+using draw_func = void (*)();
 
 class Engine
 {
-    bool success;
 public:
     Unique<Window> window;
     std::vector<key_listener> keyListeners;
@@ -59,35 +58,14 @@ public:
     Engine(int initialWidth, int initialHeight, const std::string& title);
     ~Engine();
 
-    void Start(void (*update)(double, double), void (*draw)());
-    bool GetStatus()
-    {
-        return success;
-    }
-    int GetWindowWidth()
-    {
-        int width;
-        glfwGetWindowSize(window->handle, &width, NULL);
-        return width;
-    }
-    int GetWindowHeight()
-    {
-        int height;
-        glfwGetWindowSize(window->handle, NULL, &height);
-        return height;
-    }
-    int GetFrameBufferWidth()
-    {
-        int width;
-        glfwGetFramebufferSize(window->handle, &width, NULL);
-        return width;
-    }
-    int GetFrameBufferHeight()
-    {
-        int height;
-        glfwGetFramebufferSize(window->handle, NULL, &height);
-        return height;
-    }
+    void Start(update_func update, draw_func draw);
+    bool GetStatus();
+    int GetWindowWidth();
+    int GetWindowHeight();
+    int GetFrameBufferWidth();
+    int GetFrameBufferHeight();
+private:
+    bool success;
 };
 
 

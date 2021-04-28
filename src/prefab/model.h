@@ -4,7 +4,7 @@
 #include "engine/types.h"
 #include "engine/gfx/vao.h"
 
-extern Shared<VAO> modelQuad;
+extern Unique<VAO> modelQuad;
 
 void InitialisePrefab();
 

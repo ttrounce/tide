@@ -10,6 +10,7 @@
 #include FT_FREETYPE_H
 #include <ft2build.h>
 #include <fmt/core.h>
+#include <array>
 
 FT_Library library;
 Unique<FontRenderer> fontRenderer;
@@ -33,16 +34,28 @@ void FreeFreeType()
     FT_Done_FreeType(library);
 }
 
+Font::~Font()
+{
+    FT_Done_Face(ftFace);
+    for(auto e : glyphs)
+    {
+        free(e.second->bitmap);
+        delete e.second;
+    }
+    glyphs.clear();
+    glDeleteTextures(1, &textureHandleGL);
+}
+
 FontRenderer::FontRenderer()
 {
     // Generate VAO model
-    float vertices[12] = { 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
-    float texels[12] = { 0.0, 0.0, 0.99, 0.99, 0.99, 0.0, 0.0, 0.0, 0.0, 0.99, 0.99, 0.99 };
+    auto vertices = std::vector<float>{ 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
+    auto texels = std::vector<float>{ 0.0, 0.0, 0.99, 0.99, 0.99, 0.0, 0.0, 0.0, 0.0, 0.99, 0.99, 0.99 };
 
     glGenVertexArrays(1, &vao.handle);
     glBindVertexArray(vao.handle);
-    SetBuffer(vao, 0, 2, vertices, 12);
-    SetBuffer(vao, 1, 2, texels, 12);
+    SetBuffer(vao, 0, 2, vertices);
+    SetBuffer(vao, 1, 2, texels);
     glBindVertexArray(0);
 
     // Create Shader Program
@@ -98,7 +111,7 @@ bool FontRenderer::LoadFontGlyphs(const std::string& key)
         return false;
     }
 
-    Shared<Font> font = fonts.at(key);
+    Shared<Font>& font = fonts.at(key);
     font->maxWidth = 0;
     font->maxHeight = 0;
 
@@ -150,7 +163,7 @@ bool FontRenderer::GenerateFontTextures(const std::string& key)
         fmt::print("[TIDE] Unable to create glyph textures of a font ({}) that doesn't exist\n", key);
         return false;
     }
-    Shared<Font> font = fonts.at(key);
+    Shared<Font>& font = fonts.at(key);
     // Delete the previous texture if it exists.
     if (font->assignedGL)
     {
@@ -196,7 +209,7 @@ bool FontRenderer::DeriveFace(const std::string& key, uint newFontSize)
         fmt::print("[TIDE] Unable to derive from a font ({}) that doesn't exist\n", key);
         return false;
     }
-    Shared<Font> font = fonts.at(key);
+    const Shared<Font>& font = fonts.at(key);
 
     fonts.erase(key);
 
@@ -225,7 +238,7 @@ bool FontRenderer::CloneFace(const std::string& key, const std::string& newKey, 
         fmt::print("[TIDE] Unable to replace an existing font ({}) with a derived font\n", key);
         return false;
     }
-    Shared<Font> font = fonts.at(key);
+    const Shared<Font>& font = fonts.at(key);
     if (LoadFTFace(newKey, font->fontPath, newFontSize))
     {
         if (LoadFontGlyphs(newKey))
@@ -239,7 +252,7 @@ bool FontRenderer::CloneFace(const std::string& key, const std::string& newKey, 
     return false;
 }
 
-void FontRenderer::RenderCursor(float x, float y, float width, float height, float layer, Color color)
+void FontRenderer::RenderCursor(float x, float y, float width, float height, float layer, const Color& color)
 {
     glUseProgram(program);
     glBindVertexArray(vao.handle);
@@ -264,19 +277,21 @@ void FontRenderer::RenderCursor(float x, float y, float width, float height, flo
     glUseProgram(0);
 }
 
-bool FontRenderer::RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, Color color)
+bool FontRenderer::RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color)
 {
     return RenderText(key, text, screenX, screenY, layer, color, glm::vec2(0, INT32_MAX));
 }
 
-bool FontRenderer::RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, Color color, glm::vec2 ssHorizontalCuttoff)
+bool FontRenderer::RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color, const glm::vec2& ssHorizontalCuttoff)
 {
     if (fonts.count(key) == 0)
     {
-        fmt::print("[TIDE] Unable to render a font ({}) that doesn't exist\n", key);
+        // fmt::print("[TIDE] Unable to render a font ({}) that doesn't exist\n", key);
         return false;
     }
-    Shared<Font> font = fonts.at(key);
+    if(text.empty())
+        return true;
+    const Shared<Font>& font = fonts.at(key);
     // Binds
     glUseProgram(program);
     glBindVertexArray(vao.handle);
@@ -308,7 +323,7 @@ bool FontRenderer::RenderText(const std::string& key, const std::string& text, i
         {
             continue;
         }
-        Glyph ch = *font->glyphs.at(charInd);
+        const Glyph& ch = *font->glyphs.at(charInd);
 
         float microlayer = (float)(i + 1) / (text.length() + 1);
         glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -layer + microlayer);
@@ -347,7 +362,7 @@ float FontRenderer::TextWidth(const std::string& key, const std::string& text)
         fmt::print("[TIDE] Unable to gauge the text width of a font ({}) that doesn't exist\n", key);
         return -1;
     }
-    Shared<Font> font = fonts.at(key);
+    const Shared<Font>& font = fonts.at(key);
 
     float width = 0;
     for (uint i = 0; i < text.length(); i++)
