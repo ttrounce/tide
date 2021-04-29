@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.20)
 
 project(tide)
 set(PROJECT_LIB tide_lib)
 set(PROJECT_TESTS tide_tests)
+set(PROJECT_TIMING tide_timing)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -31,8 +32,9 @@ file(GLOB_RECURSE SOURCES
     src/*.cpp
     src/*.h
 )
-file(GLOB_RECURSE TEST_SOURCES tests/*.cpp)
-list(REMOVE_ITEM SOURCES src/main.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
+include(CMakePrintHelpers)
 
 # External Dependencies
 
@@ -60,6 +62,9 @@ target_include_directories(${PROJECT_LIB} PUBLIC src)
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 
+add_executable(${PROJECT_TIMING} tests/optimisation.cpp)
+target_link_libraries(${PROJECT_TIMING} ${PROJECT_LIB})
+
 add_custom_command(
     TARGET ${PROJECT_NAME}
     POST_BUILD
@@ -68,32 +73,10 @@ add_custom_command(
     COMMENT "Copying ${PROJECT_NAME} to build folder"
 )
 
-# Tests
-
-option(BUILD_TESTS "Build tests" OFF)
-
-if(BUILD_TESTS)
-    # Google Test Dependency
-    add_subdirectory(dependencies/googletest)
-    
-    enable_testing()
-    include(CTest)
-    
-    include_directories(src/)
-
-    add_executable(${PROJECT_TESTS} ${TEST_SOURCES})
-    target_link_libraries(${PROJECT_TESTS} gtest gtest_main)
-    target_link_libraries(${PROJECT_TESTS} ${PROJECT_LIB})
-    # include_directories(src)
-
-    add_test(UnitTests ${PROJECT_TESTS})
-
-    add_custom_command(
-        TARGET ${PROJECT_TESTS}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_TESTS}> "../../build"
-        COMMAND ${CMAKE_COMMAND} -E rm $<TARGET_FILE:${PROJECT_TESTS}>
-        COMMENT "Copying ${PROJECT_TESTS} to build folder"
-    )
-
-endif()
+add_custom_command(
+    TARGET ${PROJECT_TIMING}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_TIMING}> "../../build"
+    COMMAND ${CMAKE_COMMAND} -E rm $<TARGET_FILE:${PROJECT_TIMING}>
+    COMMENT "Copying ${PROJECT_TIMING} to build folder"
+)

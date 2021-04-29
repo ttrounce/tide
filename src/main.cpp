@@ -118,6 +118,5 @@ int main()
     {
         fmt::print("[TIDE] Engine failed to build\n");
     }
-
     FreeFreeType();
 }
