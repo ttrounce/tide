@@ -23,18 +23,11 @@ void Draw()
 {
     if(draws == 100)
     {
-        auto totalDuration = 0us;
-        for(int j = 0; j < 100; j++)
+        for(int i = 0; i < 100000; i++)
         {
-            Timer<std::chrono::microseconds> timer;
-
-            for(int i = 0; i < 1000; i++)
-            {
-                fontRenderer->RenderText("hack", "test123", 0, 0, 0, Color(0xFF0000)); 
-            }
-            totalDuration += timer.LogTime();
+            fontRenderer->RenderText("hack", "test123", 0, 0, 0, Color(0xFF0000)); 
         }
-        fmt::print("avg: {}\n", totalDuration / 100);
+        fmt::print("fin\n");
     }
     draws++;
 }
