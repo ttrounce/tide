@@ -17,7 +17,7 @@ class Timer
             end = std::chrono::high_resolution_clock::now();
             duration = end - start;
 
-            fmt::print("Timer took: {}\n", std::chrono::duration_cast<D>(duration));
+            // fmt::print("Timer took: {}\n", std::chrono::duration_cast<D>(duration));
         }
         D LogTime()
         {
