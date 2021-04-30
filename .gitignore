@@ -42,7 +42,9 @@ vulkan/
 scripts/
 
 # Build outputs
-build/
+build/*
+!build/shaders
+!/build/shaders/*.glsl
 
 # CMake
 cmake/
