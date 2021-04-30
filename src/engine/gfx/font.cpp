@@ -37,7 +37,7 @@ void FreeFreeType()
 Font::~Font()
 {
     FT_Done_Face(ftFace);
-    for(auto e : glyphs)
+    for (auto e : glyphs)
     {
         free(e.second->bitmap);
         delete e.second;
@@ -49,35 +49,53 @@ Font::~Font()
 FontRenderer::FontRenderer()
 {
     // Generate VAO model
-    auto vertices = std::vector<float>{ 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
-    auto texels = std::vector<float>{ 0.0, 0.0, 0.99, 0.99, 0.99, 0.0, 0.0, 0.0, 0.0, 0.99, 0.99, 0.99 };
+    glGenVertexArrays(1, &handleVAO);
+    glGenBuffers(1, &handleBuffer);
 
-    glGenVertexArrays(1, &vao.handle);
-    glBindVertexArray(vao.handle);
-    SetBuffer(vao, 0, 2, vertices);
-    SetBuffer(vao, 1, 2, texels);
+    glBindVertexArray(handleVAO);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
+    glVertexAttribDivisor(0, 1);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
     glBindVertexArray(0);
 
     // Create Shader Program
     std::string vert = ReadFile("shaders/font_vert.glsl");
     std::string frag = ReadFile("shaders/font_frag.glsl");
 
-    program = glCreateProgram();
-    glUseProgram(program);
-    CreateVertexShader(program, vert, vert.length());
-    CreateFragmentShader(program, frag, frag.length());
-    LinkProgram(program);
+    // Create Program
+    handleProgram = glCreateProgram();
+    glUseProgram(handleProgram);
+    CreateVertexShader(handleProgram, vert, vert.length());
+    CreateFragmentShader(handleProgram, frag, frag.length());
+    LinkProgram(handleProgram);
     glUseProgram(0);
+
+    // Get Uniform Locations
+    locationOrthographic = glGetUniformLocation(handleProgram, "orthographic");
+
+    glUseProgram(handleProgram);
+    UniformMat4(locationOrthographic, glm::ortho<float>(0.0, engine->GetFrameBufferWidth(), engine->GetFrameBufferHeight(), 0.0, 0.0001, 10.0));
+    glUseProgram(0);
+    // glm::mat4 projection = glm::ortho<float>(0.0, 800.0, 600.0, 0.0, 0.0001, 10.0);
+    // UniformMat4(program, "orthographic", projection);
+
 }
 
 FontRenderer::~FontRenderer()
 {
-    glDeleteProgram(program);
+    glDeleteProgram(handleProgram);
 
     fonts.clear();
 
-    glDeleteVertexArrays(1, &vao.handle);
-    glDeleteBuffers(vao.buffers.size(), &vao.buffers[0]);
+    glDeleteVertexArrays(1, &handleVAO);
+    glDeleteBuffers(1, &handleBuffer);
 }
 
 bool FontRenderer::LoadFTFace(const std::string& key, const std::string& filepath, uint fontSize)
@@ -252,70 +270,55 @@ bool FontRenderer::CloneFace(const std::string& key, const std::string& newKey, 
     return false;
 }
 
-void FontRenderer::RenderCursor(float x, float y, float width, float height, float layer, const Color& color)
+void FontRenderer::UpdateOrthographic(int width, int height)
 {
-    glUseProgram(program);
-    glBindVertexArray(vao.handle);
-
-    glm::mat4 projection = glm::ortho<float>(0.0, engine->GetFrameBufferWidth(), engine->GetFrameBufferHeight(), 0.0, 0.0001, 10.0);
-    UniformMat4(program, "projection", projection);
-
-    glm::vec3 translate(x, y, 0.0);
-    glm::vec3 scale(width, height, 1.0);
-    glm::mat4 transformation(1.0f);
-    transformation = glm::translate(transformation, translate);
-    transformation = glm::scale(transformation, scale);
-    UniformMat4(program, "transformation", transformation);
-
-    UniformVec3(program, "color", color.vec);
-
-    glUniform1i(glGetUniformLocation(program, "caret"), true);
-    glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -layer);
-    glDrawArrays(GL_TRIANGLES, 0, 12);
-
-    glBindVertexArray(0);
+    glUseProgram(handleProgram);
+    UniformMat4(locationOrthographic, glm::ortho<float>(0.0, width, height, 0.0, 0.0001, 10.0));
     glUseProgram(0);
 }
 
-bool FontRenderer::RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color)
+void FontRenderer::BatchCursor(float x, float y, float width, float height, float layer, const Color& color)
 {
-    return RenderText(key, text, screenX, screenY, layer, color, glm::vec2(0, INT32_MAX));
+    auto instance = CharacterInstance{
+        .pos = glm::vec2{x, y},
+        .size = glm::vec2{width, height},
+        .textureIndex = -1,
+        .layer = -layer,
+        .color = color.vec
+    };
+    cursorInstances.push_back(instance);
 }
 
-bool FontRenderer::RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color, const glm::vec2& ssHorizontalCuttoff)
+void FontRenderer::BatchText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color)
 {
-    if (fonts.count(key) == 0)
+    if (fonts.count(key) == 0 || text.empty())
     {
-        // fmt::print("[TIDE] Unable to render a font ({}) that doesn't exist\n", key);
-        return false;
+        return;
     }
-    if(text.empty())
-        return true;
+
+    auto exists = batchedFonts.count(key);
+    if (exists == 0)
+    {
+        batchedFonts.insert(std::pair<std::string, InstanceBatch>(key, {}));
+    }
+    
     const Shared<Font>& font = fonts.at(key);
-    // Binds
-    glUseProgram(program);
-    glBindVertexArray(vao.handle);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, font->textureHandleGL);
-
-    UniformVec2(program, "ssHorizontalCuttoff", ssHorizontalCuttoff);
-
-    // Color matrix uniform
-    UniformVec3(program, "color", color.vec);
-
-    // Orthographic matrix uniform
-    glm::mat4 projection = glm::ortho<float>(0.0, engine->GetFrameBufferWidth(), engine->GetFrameBufferHeight(), 0.0, 0.0001, 10.0);
-    UniformMat4(program, "projection", projection);
-    glUniform1i(glGetUniformLocation(program, "caret"), false);
-
     float caret = 0.0;
-    glm::vec3 scale((float)font->maxWidth, (float)font->maxHeight, 1.0);
 
+    auto& fontBatch = batchedFonts.at(key);
+
+    // Load all text into batch...
     for (uint i = 0; i < text.length(); i++)
     {
-        if (text[i] == '\t')
+        // White space checker
+        switch (text[i])
         {
-            caret += font->glyphs.at(FT_Get_Char_Index(font->ftFace, ' '))->advance * 4;
-            continue;
+            case '\t':
+            {
+                caret += font->glyphs.at(FT_Get_Char_Index(font->ftFace, ' '))->advance * 4;
+                continue;
+            }
+            default: {}
         }
 
         uint charInd = FT_Get_Char_Index(font->ftFace, text[i]);
@@ -325,34 +328,64 @@ bool FontRenderer::RenderText(const std::string& key, const std::string& text, i
         }
         const Glyph& ch = *font->glyphs.at(charInd);
 
-        float microlayer = (float)(i + 1) / (text.length() + 1);
-        glUniform1f(glGetUniformLocation(program, "defaultLayerZ"), -layer + microlayer);
+        auto instance = CharacterInstance{
+            .pos = glm::vec2{screenX + (caret + ch.bearingX), screenY + (font->ascender - ch.bearingY - 1)},
+            .size = glm::vec2{font->maxWidth, font->maxHeight},
+            .textureIndex = (int)charInd,
+            .layer = (float)((i + 1) / (text.length() + 1)) - layer,
+            .color = color.vec
+        };
+        fontBatch.push_back(instance);
 
-        float hb = font->ascender - ch.bearingY - 1;
+        caret += ch.advance;
+    }
+}
 
-        float advance = ch.advance;
-        float bearingX = ch.bearingX;
+void FontRenderer::Render()
+{
+    glUseProgram(handleProgram);
+    glBindVertexArray(handleVAO);
 
-        glm::vec3 translate((float)screenX + (caret + bearingX), (float)screenY + hb, 0.0);
+    if(!cursorInstances.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, handleBuffer);
+        glBufferData(GL_ARRAY_BUFFER, cursorInstances.size() * sizeof(CharacterInstance), cursorInstances.data(), GL_DYNAMIC_DRAW);
+        glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, pos         ));
+        glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, size        ));
+        glVertexAttribIPointer(2, 1, GL_INT  ,           sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, textureIndex));
+        glVertexAttribPointer (3, 1, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, layer       ));
+        glVertexAttribPointer (4, 3, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, color       ));
 
-        glm::mat4 transformation(1.0f);
-        transformation = glm::translate(transformation, translate);
-        transformation = glm::scale(transformation, scale);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, cursorInstances.size());
+    }
+    for (auto fontBatch : batchedFonts)
+    {
+        if (fonts.count(fontBatch.first) == 0)
+            continue;
 
-        UniformMat4(program, "transformation", transformation);
+        const auto& font = fonts.at(fontBatch.first);
+        const auto& batch = fontBatch.second;
 
-        glUniform1i(glGetUniformLocation(program, "layer"), FT_Get_Char_Index(font->ftFace, text[i]));
+        if (batch.empty())
+            continue;
 
-        // Drawing
-        glDrawArrays(GL_TRIANGLES, 0, 12);
-        caret += advance;
+        glBindTexture(GL_TEXTURE_2D_ARRAY, font->textureHandleGL);
+        glBindBuffer(GL_ARRAY_BUFFER, handleBuffer);
+        glBufferData(GL_ARRAY_BUFFER, batch.size() * sizeof(CharacterInstance), batch.data(), GL_DYNAMIC_DRAW);
+        glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, pos         ));
+        glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, size        ));
+        glVertexAttribIPointer(2, 1, GL_INT  ,           sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, textureIndex));
+        glVertexAttribPointer (3, 1, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, layer       ));
+        glVertexAttribPointer (4, 3, GL_FLOAT, GL_FALSE, sizeof(CharacterInstance), (void*) offsetof(CharacterInstance, color       ));
+
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, batch.size());
     }
 
-    // Unbinds
-    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
-    return true;
+    batchedFonts.clear();
+    cursorInstances.clear();
 }
 
 float FontRenderer::TextWidth(const std::string& key, const std::string& text)
@@ -386,7 +419,7 @@ float FontRenderer::TextWidth(const std::string& key, const std::string& text)
 
 Shared<Font> FontRenderer::GetFont(const std::string& key)
 {
-    if(fonts.count(key) == 0)
+    if (fonts.count(key) == 0)
     {
         fmt::print("[TIDE] Couldn't retrieve font ({}) as it doesn't exist\n", key);
         return nullptr;

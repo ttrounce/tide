@@ -23,6 +23,15 @@ struct Glyph
     float bearingY;
 };
 
+struct CharacterInstance
+{
+    glm::vec2 pos;
+    glm::vec2 size;
+    int textureIndex;
+    float layer;
+    glm::vec3 color;
+};
+
 struct Font
 {
     // map of glyph metrics+bitmap
@@ -49,6 +58,8 @@ struct Font
     ~Font();
 };
 
+using InstanceBatch = std::vector<CharacterInstance>;
+
 void InitFreeType();
 void FreeFreeType();
 
@@ -57,7 +68,6 @@ class FontRenderer
 public:
     FontRenderer();
     ~FontRenderer();
-    void RenderCursor(float x, float y, float width, float height, float layer, const Color& color);
     /**
          * Loads a new fontface to the renderer at a certain size & creates the font glyphs.
          */
@@ -72,8 +82,11 @@ public:
          */
     bool CloneFace(const std::string& key, const std::string& newKey, uint newFontSize);
 
-    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color);
-    bool RenderText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& color, const glm::vec2& screenspaceHorizontalCuttoff);
+    void UpdateOrthographic(int width, int height);
+
+    void BatchCursor(float x, float y, float width, float height, float layer, const Color& color);
+    void BatchText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& Color);
+    void Render();
     /**
          * Gauges the width of a string of text using a font in pixels.
          * @returns -1 if the font doesn't exist.
@@ -83,9 +96,15 @@ public:
     Shared<Font> GetFont(const std::string& key);
 private:
     std::unordered_map<std::string, Shared<Font>> fonts;
+    std::unordered_map<std::string, InstanceBatch> batchedFonts;
+    InstanceBatch cursorInstances;
 
-    VAO vao;
-    GLuint program;
+    GLuint handleVAO;
+    GLuint handleProgram;
+    GLuint handleBuffer;
+
+    GLuint locationOrthographic;
+
     std::string fontpath;
 
     bool LoadFTFace(const std::string& key, const std::string& filepath, uint fontSize);

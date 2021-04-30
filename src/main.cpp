@@ -23,16 +23,18 @@ void Draw()
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0, 0, 0, 1);
 
-    baseContainer->RenderAll();
+    baseContainer->Batch();
 
-    std::string fpsText = fmt::format("{:.1f}us {}fps", engine->window->frameTime, engine->window->fps);
-    fontRenderer->RenderText("hack", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", fpsText), 2, 2, Color{0xFFFFFF});
+    std::string fpsText = fmt::format("{:.1f}ms {}fps", engine->window->frameTime, engine->window->fps);
+    fontRenderer->BatchText("hack", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", fpsText), 2, 2, Color{ 0xFFFFFF });
 
     // std::string mouseText = fmt::format("{:.0f}:{:.0f}", engine->window->mouse->pos.x, engine->window->mouse->pos.y);
     // fontRenderer->RenderText("hack", mouseText, engine->GetFrameBufferWidth() - fontRenderer->TextWidth("hack", mouseText), panel->fontParameters.linePadding + panel->fontParameters.GetLineHeight(), 2, Color(0xFFFFFF));
 
     // std::string cursorString = fmt::format("{}:{}", panel->cursor.x, panel->cursor.y);
     // fontRenderer->RenderText("hack", cursorString, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", cursorString), engine->GetFrameBufferHeight() - panel->fontParameters.GetLineHeight() + panel->fontParameters.linePadding, 2, Color(0x000000));
+
+    fontRenderer->Render();
 }
 
 void OnCharAction(uint codepoint)
@@ -44,7 +46,7 @@ void OnKeyAction(int key, int action, int scancode)
 {
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
-        if(key == GLFW_KEY_F1)
+        if (key == GLFW_KEY_F1)
         {
             baseContainer->SwitchWindowFocus();
         }
@@ -87,12 +89,13 @@ int main()
     engine = std::make_unique<Engine>(800, 600, "T.IDE");
     if (engine->GetStatus())
     {
-        engine->window->frameRateTarget = 10000;
+        engine->window->frameRateTarget = 60;
         engine->charListeners.push_back(OnCharAction);
         engine->keyListeners.push_back(OnKeyAction);
         engine->resizeFrameBufferListeners.push_back([](int width, int height) {
-            baseContainer->UpdateFrameSize({0, 0, width, height});
-        });
+            fontRenderer->UpdateOrthographic(width, height);
+            baseContainer->UpdateFrameSize({ 0, 0, width, height });
+            });
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -102,9 +105,9 @@ int main()
 
         InitFreeType();
         InitialisePrefab();
-        fontRenderer->LoadFace("hack", "hack.ttf", 16);
+        fontRenderer->LoadFace("hack", "fonts/hack.ttf", 16);
 
-        Unique<TextPanel> panel = std::make_unique<TextPanel>(Rect{0, 0, 800, 600});
+        Unique<TextPanel> panel = std::make_unique<TextPanel>(Rect{ 0, 0, 800, 600 });
         panel->fontParameters = { "hack", 2 };
         panel->isFocused = true;
 

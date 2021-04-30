@@ -110,7 +110,7 @@ void Engine::Start(update_func update, draw_func draw)
     while (!glfwWindowShouldClose(window->handle))
     {
         auto then = std::chrono::high_resolution_clock::now();
-        // std::this_thread::sleep_until(timeNext);
+        std::this_thread::sleep_until(timeNext);
 
         draw();
         glfwPollEvents();
@@ -136,65 +136,11 @@ void Engine::Start(update_func update, draw_func draw)
         }
 
         auto timeElapsed = (std::chrono::high_resolution_clock::now() - then);
-        window->frameTime = std::chrono::duration_cast<std::chrono::microseconds>(timeElapsed).count();
+        window->frameTime = std::chrono::duration_cast<std::chrono::milliseconds>(timeElapsed).count();
         auto frameDuration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<double>(1.0 / (double)window->frameRateTarget));
         timeNext += frameDuration;
     }
 }
-// {
-//     const double dt = 1.0/60.0;
-//     double updateAccumulator = 0.0;
-//     double frameCountAccumulator = 0.0;
-
-//     double time = 0.0;
-
-//     auto startTime = std::chrono::high_resolution_clock::now();
-
-//     double frameTime = 0.0;
-//     int frameCount = 0;        
-
-//     glfwSwapInterval(1);
-
-//     while(!glfwWindowShouldClose(window->handle))
-//     {
-//         auto endTime = std::chrono::high_resolution_clock::now();
-//         frameTime = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime)).count();
-//         startTime = endTime;
-
-//         window->frameTime = frameTime * 1000.0;
-
-//         updateAccumulator += frameTime;
-//         frameCountAccumulator += frameTime;
-
-//         if(updateAccumulator >= dt)
-//         {
-//             glfwPollEvents();
-
-//             updateAccumulator -= dt;
-//             time += dt;
-
-//             // mouse delta calculations
-//             window->mouse->delta = glm::clamp(window->mouse->pos - window->mouse->lastPos, glm::vec2(-128.0f), glm::vec2(128.0f));
-//             window->mouse->lastPos = window->mouse->pos;
-
-//             update(time, dt); 
-//         }
-
-//         if(!window->iconified)
-//         {   
-//             if(frameCountAccumulator >= 1.0)
-//             {
-//                 window->fps = glm::max(frameCount, 0);
-//                 frameCount = 0;
-//                 frameCountAccumulator -= 1;
-//             }
-
-//             frameCount++;
-//             draw();
-//         }
-//         glfwSwapBuffers(window->handle);
-//     }
-// }
 
 bool Engine::GetStatus()
 {

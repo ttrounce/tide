@@ -34,7 +34,7 @@ public:
     void SwitchWindowFocus();
     void TakeInput(InputType type, uint codepoint);
 
-    void RenderAll();
+    void Batch();
 };
 
 #endif // H_TEXTPANEL_CONTAINER_H

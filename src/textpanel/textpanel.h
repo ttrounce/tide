@@ -83,7 +83,7 @@ public:
 
     TextPanel(const Rect& rect);
 
-    void Render();
+    void Batch();
     void TakeInput(InputType type, uint codepoint);
 };
 

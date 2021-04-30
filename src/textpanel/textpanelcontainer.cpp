@@ -127,15 +127,15 @@ void TextPanelContainer::TakeInput(InputType type, uint codepoint)
     }
 }
 
-void TextPanelContainer::RenderAll()
+void TextPanelContainer::Batch()
 {
     if (panel)
     {
-        panel->Render();
+        panel->Batch();
     }
     else
     {
-        firstContainer->RenderAll();
-        secondContainer->RenderAll();
+        firstContainer->Batch();
+        secondContainer->Batch();
     }
 }

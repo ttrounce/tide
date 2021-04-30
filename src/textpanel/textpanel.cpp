@@ -189,7 +189,7 @@ void TextPanel::MoveCursorRight()
 #include <chrono>
 #include <fmt/chrono.h>
 
-void TextPanel::Render()
+void TextPanel::Batch()
 {
     const Bounds& contentBounds = GetContentBounds();
     const int totalLineHeight = fontParameters.GetLineHeight();
@@ -201,8 +201,8 @@ void TextPanel::Render()
     int lineEnd = glm::min<int>(totalLineCount, ((contentBounds.y2 - contentBounds.y1) - camera.y) / totalLineHeight);
     int lineNumber = lineStart;
 
-    fontRenderer->RenderCursor(panelRectangle.x, contentBounds.y2, panelRectangle.w, totalLineHeight, 1.0, Color(0xFFFFFF));
-    fontRenderer->RenderText(fontParameters.fontName, "textpanel2.cpp", panelRectangle.x, contentBounds.y2 + fontParameters.linePadding, 2, Color(0x000000));
+    fontRenderer->BatchCursor(panelRectangle.x, contentBounds.y2, panelRectangle.w, totalLineHeight, 1.0, Color(0xFFFFFF));
+    fontRenderer->BatchText(fontParameters.fontName, "textpanel2.cpp", panelRectangle.x, contentBounds.y2 + fontParameters.linePadding, 2, Color(0x000000));
 
     for(auto i = lines.begin() + lineStart; i != lines.begin() + lineEnd; i++, lineNumber++)
     {
@@ -223,18 +223,18 @@ void TextPanel::Render()
         if (lineNumber == cursor.y && isFocused)
         {
             // Render line-selector
-            fontRenderer->RenderCursor(contentBounds.x1, textY - fontParameters.linePadding, panelRectangle.w - contentBounds.x1, totalLineHeight, 1, Color(0x141414));
+            fontRenderer->BatchCursor(contentBounds.x1, textY - fontParameters.linePadding, panelRectangle.w - contentBounds.x1, totalLineHeight, 1, Color(0x141414));
             // Render the line number, with the highlight
-            fontRenderer->RenderText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0xFFFFFF));
+            fontRenderer->BatchText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0xFFFFFF));
         }
         else
         {
             // Render the line number, without the highlight
-            fontRenderer->RenderText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0x444444));
+            fontRenderer->BatchText(fontParameters.fontName, lineString, panelRectangle.x + offsetLnNumbers - fontRenderer->TextWidth(fontParameters.fontName, lineString), textY, 2, Color(0x444444));
         }
         
         // Render the line text
-        fontRenderer->RenderText(fontParameters.fontName, line, textX, textY, 2, Color(0xFFFFFF), glm::vec2(GetContentBounds().x1, GetContentBounds().x2));
+        fontRenderer->BatchText(fontParameters.fontName, line, textX, textY, 2, Color(0xFFFFFF)/*, glm::vec2(GetContentBounds().x1, GetContentBounds().x2)*/);
 
         // Render the cursor on top of everything.
         if (lineNumber == cursor.y && isFocused)
@@ -243,7 +243,7 @@ void TextPanel::Render()
 
             int cursorRenderX = textX + fontRenderer->TextWidth(fontParameters.fontName, leftText);
             int cursorRenderY = textY - fontParameters.linePadding;
-            fontRenderer->RenderCursor(cursorRenderX, cursorRenderY, fontParameters.GetFontSize() / 8.0, totalLineHeight, 3, Color(0xFFFFFF));
+            fontRenderer->BatchCursor(cursorRenderX, cursorRenderY, fontParameters.GetFontSize() / 8.0, totalLineHeight, 3, Color(0xFFFFFF));
         }
     }
 }

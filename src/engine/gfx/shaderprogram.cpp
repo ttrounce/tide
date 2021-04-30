@@ -1,5 +1,6 @@
 #include "shaderprogram.h"
 #include <fmt/core.h>
+#include <iostream>
 
 void CreateVertexShader(GLuint program, const std::string& source, GLint sourceLength)
 {
@@ -74,32 +75,32 @@ void LinkProgram(GLuint program)
     }
 }
 
-void UniformVec2(GLuint program, const std::string& name, const glm::vec2& vec)
+void UniformVec2(GLuint loc, const glm::vec2& vec)
 {
-    glUniform2f(glGetUniformLocation(program, name.c_str()), vec[0], vec[1]);
+    glUniform2f(loc, vec[0], vec[1]);
 }
 
-void UniformVec3(GLuint program, const std::string& name, const glm::vec3& vec)
+void UniformVec3(GLuint loc, const glm::vec3& vec)
 {
-    glUniform3f(glGetUniformLocation(program, name.c_str()), vec[0], vec[1], vec[2]);
+    glUniform3f(loc, vec[0], vec[1], vec[2]);
 }
 
-void UniformVec4(GLuint program, const std::string& name, const glm::vec4& vec)
+void UniformVec4(GLuint loc, const glm::vec4& vec)
 {
-    glUniform4f(glGetUniformLocation(program, name.c_str()), vec[0], vec[1], vec[2], vec[3]);
+    glUniform4f(loc, vec[0], vec[1], vec[2], vec[3]);
 }
 
-void UniformMat2(GLuint program, const std::string& name, const glm::mat2& value)
+void UniformMat2(GLuint loc, const glm::mat2& value)
 {
-    glUniformMatrix2fv(glGetUniformLocation(program, name.c_str()), 1, false, &value[0][0]);
+    glUniformMatrix2fv(loc, 1, false, &value[0][0]);
 }
 
-void UniformMat3(GLuint program, const std::string& name, const glm::mat3& value)
+void UniformMat3(GLuint loc, const glm::mat3& value)
 {
-    glUniformMatrix3fv(glGetUniformLocation(program, name.c_str()), 1, false, &value[0][0]);
+    glUniformMatrix3fv(loc, 1, false, &value[0][0]);
 }
 
-void UniformMat4(GLuint program, const std::string& name, const glm::mat4& value)
+void UniformMat4(GLuint loc, const glm::mat4& value)
 {
-    glUniformMatrix4fv(glGetUniformLocation(program, name.c_str()), 1, false, &value[0][0]);
+    glUniformMatrix4fv(loc, 1, false, &value[0][0]);
 }
