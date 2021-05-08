@@ -277,13 +277,13 @@ void FontRenderer::UpdateOrthographic(int width, int height)
     glUseProgram(0);
 }
 
-void FontRenderer::BatchCursor(float x, float y, float width, float height, float layer, const Color& color)
+void FontRenderer::BatchRect(float x, float y, float width, float height, float layer, const Color& color)
 {
     auto instance = CharacterInstance{
         .pos = glm::vec2{x, y},
         .size = glm::vec2{width, height},
         .textureIndex = -1,
-        .layer = -layer,
+        .layer = layer,
         .color = color.vec
     };
     cursorInstances.push_back(instance);
@@ -332,7 +332,7 @@ void FontRenderer::BatchText(const std::string& key, const std::string& text, in
             .pos = glm::vec2{screenX + (caret + ch.bearingX), screenY + (font->ascender - ch.bearingY - 1)},
             .size = glm::vec2{font->maxWidth, font->maxHeight},
             .textureIndex = (int)charInd,
-            .layer = (float)((i + 1) / (text.length() + 1)) - layer,
+            .layer = layer,
             .color = color.vec
         };
         fontBatch.push_back(instance);

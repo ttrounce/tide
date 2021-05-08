@@ -8,7 +8,7 @@
 #include "engine/gfx/gfx.h"
 #include "textpanel/textpanel.h"
 #include "prefab/model.h"
-#include "textpanel/textpanelcontainer.h"
+#include "textpanel/container.h"
 #include "engine/types.h"
 
 void Update(double t, double dt)
@@ -16,17 +16,16 @@ void Update(double t, double dt)
 
 }
 
-Unique<TextPanelContainer> baseContainer;
+Unique<PanelAncestor> baseContainer;
 
 void Draw()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0, 0, 0, 1);
 
-    baseContainer->Batch();
-
+    baseContainer->startNode->Batch();
     std::string fpsText = fmt::format("{:.1f}ms {}fps", engine->window->frameTime, engine->window->fps);
-    fontRenderer->BatchText("hack", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack", fpsText), 2, 2, Color{ 0xFFFFFF });
+    fontRenderer->BatchText("hack-10", fpsText, engine->GetWindowWidth() - fontRenderer->TextWidth("hack-10", fpsText) - 3, 5, 5.0, Color{ 0xFFFFFF });
 
     // std::string mouseText = fmt::format("{:.0f}:{:.0f}", engine->window->mouse->pos.x, engine->window->mouse->pos.y);
     // fontRenderer->RenderText("hack", mouseText, engine->GetFrameBufferWidth() - fontRenderer->TextWidth("hack", mouseText), panel->fontParameters.linePadding + panel->fontParameters.GetLineHeight(), 2, Color(0xFFFFFF));
@@ -39,7 +38,61 @@ void Draw()
 
 void OnCharAction(uint codepoint)
 {
-    baseContainer->TakeInput(INPUT_WRITE, codepoint);
+    auto& node = baseContainer->focusedNode;
+    if (node.has_value())
+    {
+        node.value()->TakeInput(INPUT_WRITE, codepoint);
+    }
+}
+
+#include <bitset>
+
+void PrintPanelSubnode(PanelNode* node, int depth)
+{
+    if(node)
+    {
+        if(node->childA)
+        {
+            for(int i = 0; i < depth; i++)
+            {
+                fmt::print("\t");
+            }
+            fmt::print("|-> childA: {} ({})\n", (void*) node->childA.get(), (void*) node->childA->panel.get());
+            PrintPanelSubnode(node->childA.get(), depth+1);
+        }
+        else
+        {
+            for(int i = 0; i < depth; i++)
+            {
+                fmt::print("\t");
+            }
+            fmt::print("|-> childA: null\n");
+        }
+        if(node->childB)
+        {
+            for(int i = 0; i < depth; i++)
+            {
+                fmt::print("\t");
+            }
+            fmt::print("|-> childB: {} ({})\n", (void*) node->childB.get(), (void*) node->childB->panel.get());
+            PrintPanelSubnode(node->childB.get(), depth+1);
+        }
+        else
+        {
+            for(int i = 0; i < depth; i++)
+            {
+                fmt::print("\t");
+            }
+            fmt::print("|-> childB: null\n");
+        }
+    }
+}
+
+void PrintPanelTree()
+{
+    fmt::print("---ANCESTOR---\n");
+    fmt::print(""); PrintPanelSubnode(baseContainer->startNode.get(), 0);
+    fmt::print("--------------\n");
 }
 
 void OnKeyAction(int key, int action, int scancode)
@@ -48,39 +101,60 @@ void OnKeyAction(int key, int action, int scancode)
     {
         if (key == GLFW_KEY_F1)
         {
-            baseContainer->SwitchWindowFocus();
+            baseContainer->CycleFocus();
         }
-        if (key == GLFW_KEY_BACKSPACE)
+        if(key == GLFW_KEY_F2)
         {
-            baseContainer->TakeInput(INPUT_REMOVE_BACK, 0);
+            baseContainer->SplitFocusedHorz();
         }
-        if (key == GLFW_KEY_DELETE)
+        if(key == GLFW_KEY_F3)
         {
-            baseContainer->TakeInput(INPUT_REMOVE_FWRD, 0);
+            baseContainer->SplitFocusedVert();
         }
-        if (key == GLFW_KEY_TAB)
+        if(key == GLFW_KEY_F4)
         {
-            baseContainer->TakeInput(INPUT_WRITE, '\t');
+            baseContainer->CloseFocusedNode();
+            baseContainer->UpdateFrameSize(engine->GetFrameBufferWidth(), engine->GetFrameBufferHeight());
         }
-        if (key == GLFW_KEY_ENTER)
+        if(key == GLFW_KEY_F5)
         {
-            baseContainer->TakeInput(INPUT_NEW_LINE, 0);
+            PrintPanelTree();
         }
-        if (key == GLFW_KEY_UP)
+        auto& node = baseContainer->focusedNode;
+        if (node.has_value())
         {
-            baseContainer->TakeInput(INPUT_MOVE_UP, 0);
-        }
-        if (key == GLFW_KEY_DOWN)
-        {
-            baseContainer->TakeInput(INPUT_MOVE_DOWN, 0);
-        }
-        if (key == GLFW_KEY_LEFT)
-        {
-            baseContainer->TakeInput(INPUT_MOVE_LEFT, 0);
-        }
-        if (key == GLFW_KEY_RIGHT)
-        {
-            baseContainer->TakeInput(INPUT_MOVE_RIGHT, 0);
+            if (key == GLFW_KEY_BACKSPACE)
+            {
+                node.value()->TakeInput(INPUT_REMOVE_BACK, 0);
+            }
+            if (key == GLFW_KEY_DELETE)
+            {
+                node.value()->TakeInput(INPUT_REMOVE_FWRD, 0);
+            }
+            if (key == GLFW_KEY_TAB)
+            {
+                node.value()->TakeInput(INPUT_WRITE, '\t');
+            }
+            if (key == GLFW_KEY_ENTER)
+            {
+                node.value()->TakeInput(INPUT_NEW_LINE, 0);
+            }
+            if (key == GLFW_KEY_UP)
+            {
+                node.value()->TakeInput(INPUT_MOVE_UP, 0);
+            }
+            if (key == GLFW_KEY_DOWN)
+            {
+                node.value()->TakeInput(INPUT_MOVE_DOWN, 0);
+            }
+            if (key == GLFW_KEY_LEFT)
+            {
+                node.value()->TakeInput(INPUT_MOVE_LEFT, 0);
+            }
+            if (key == GLFW_KEY_RIGHT)
+            {
+                node.value()->TakeInput(INPUT_MOVE_RIGHT, 0);
+            }
         }
     }
 }
@@ -89,16 +163,21 @@ int main()
     engine = std::make_unique<Engine>(800, 600, "T.IDE");
     if (engine->GetStatus())
     {
+        fmt::print("GL Version: {}\n", glGetString(GL_VERSION));
+
         engine->window->frameRateTarget = 60;
         engine->charListeners.push_back(OnCharAction);
         engine->keyListeners.push_back(OnKeyAction);
         engine->resizeFrameBufferListeners.push_back([](int width, int height) {
             fontRenderer->UpdateOrthographic(width, height);
-            baseContainer->UpdateFrameSize({ 0, 0, width, height });
+            baseContainer->UpdateFrameSize(width, height);
             });
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
 
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
@@ -106,14 +185,12 @@ int main()
         InitFreeType();
         InitialisePrefab();
         fontRenderer->LoadFace("hack", "fonts/hack.ttf", 16);
+        fontRenderer->CloneFace("hack", "hack-10", 10);
 
-        Unique<TextPanel> panel = std::make_unique<TextPanel>(Rect{ 0, 0, 800, 600 });
-        panel->fontParameters = { "hack", 2 };
-        panel->isFocused = true;
-
-        baseContainer = std::make_unique<TextPanelContainer>(std::move(panel));
-        baseContainer->SplitHorizontal();
-        baseContainer->GetSecondChild()->SplitVertical();
+        baseContainer = std::make_unique<PanelAncestor>(Rect{ 0,0,800,600 }, TextPanelParameters{ "hack", 2 });
+        baseContainer->SetFocusedNode(baseContainer->startNode.get());
+        // baseContainer->SplitHorizontal();
+        // baseContainer->GetSecondChild()->SplitVertical();
 
         engine->Start(Update, Draw);
     }

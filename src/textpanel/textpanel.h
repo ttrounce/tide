@@ -29,6 +29,29 @@ enum InputType
     INPUT_SHIFT_RIGHT
 };
 
+struct TextPanelParameters {
+    std::string fontName;
+    int linePadding;
+    int GetFontSize() const
+    {
+        const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
+        if(fnt)
+        {
+            return fnt->fontSize;
+        }
+        return 0;
+    }
+    int GetLineHeight() const
+    {
+        const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
+        if(fnt)
+        {
+            return (2 * this->linePadding + (int)(fnt->ascender - fnt->descender));
+        }
+        return 0;
+    }
+};
+
 class TextPanel
 {
 private:
@@ -48,40 +71,18 @@ private:
     void MoveCursorLeft(int cursorX);
     void MoveCursorRight();
 public:
-    /**
-     * A wrapper around the text panel font, with some checking to avoid UB.
-     */
-    struct {
-        std::string fontName;
-        int linePadding;
-        int GetFontSize() const
-        {
-            const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
-            if(fnt)
-            {
-                return fnt->fontSize;
-            }
-            return 0;
-        }
-        int GetLineHeight() const
-        {
-            const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
-            if(fnt)
-            {
-                return (2 * this->linePadding + (int)(fnt->ascender - fnt->descender));
-            }
-            return 0;
-        }
-    } fontParameters;
+
+    Rect panelRectangle;
+
+    // A wrapper around the text panel parameters, with some checking to avoid UB.
+    const TextPanelParameters panelParameters;
 
     glm::ivec2 camera;
     glm::ivec2 cursor;
 
-    Rect panelRectangle;
-
     bool isFocused;
 
-    TextPanel(const Rect& rect);
+    TextPanel(const Rect& rect, const TextPanelParameters& params);
 
     void Batch();
     void TakeInput(InputType type, uint codepoint);

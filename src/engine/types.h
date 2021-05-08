@@ -4,6 +4,7 @@
 #include <glm/vec3.hpp>
 #include <stdint.h>
 #include <memory>
+#include <optional>
 
 typedef unsigned long long ulong;
 typedef unsigned int       uint;
@@ -50,5 +51,7 @@ template <typename T>
 using Unique = std::unique_ptr<T>;
 template <typename T>
 using Weak = std::weak_ptr<T>;
+template <typename T>
+using Optional = std::optional<T>;
 
 #endif // TIDE_TYPES_H

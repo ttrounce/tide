@@ -84,7 +84,7 @@ public:
 
     void UpdateOrthographic(int width, int height);
 
-    void BatchCursor(float x, float y, float width, float height, float layer, const Color& color);
+    void BatchRect(float x, float y, float width, float height, float layer, const Color& color);
     void BatchText(const std::string& key, const std::string& text, int screenX, int screenY, float layer, const Color& Color);
     void Render();
     /**

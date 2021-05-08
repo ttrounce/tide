@@ -16,7 +16,7 @@ out float p_cursor;
 void main()
 {
     vec2 vertexPos = vec2(gl_VertexID >> 1, gl_VertexID & 1);
-    gl_Position = orthographic * vec4(pos + size * vertexPos, layer, 1.0);
+    gl_Position = orthographic * vec4(pos + size * vertexPos, -layer, 1.0);
     p_textureCoord = vec3(vertexPos, textureID);
     p_color = color;
 

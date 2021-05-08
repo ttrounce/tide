@@ -1,13 +1,17 @@
 #include "window.h"
 #include "engine.h"
 
+#define TIDE_ASSERT_IMPL
+#include "assert.h"
+
 #include <glm/ext/scalar_common.hpp>
 #include <glad/glad.h>
 #include <fmt/core.h>
 #include <chrono>
 #include <thread>
 
-Window::Window() : fps(0)
+Window::Window()
+    : fps(0)
 {}
 
 static void ErrorCallbackGLFW(int error, const char* description)
