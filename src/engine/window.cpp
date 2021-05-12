@@ -74,7 +74,8 @@ Engine::Engine(int initialWidth, int initialHeight, const std::string& title)
             rl(width, height);
         }
         });
-    glfwSetKeyCallback(window->handle, [](GLFWwindow* window, int k, int s, int a, int m) {
+    glfwSetKeyCallback(window->handle, [](GLFWwindow* handle, int k, int s, int a, int m) {
+        engine->window->keyboard->keys[k] = (a == GLFW_PRESS);
         for (auto it = engine->keyListeners.begin(); it != engine->keyListeners.end(); it++)
         {
             key_listener kl = *it;

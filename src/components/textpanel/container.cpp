@@ -1,5 +1,7 @@
 #include "container.h"
-#include "../engine/assert.h"
+#include "../../engine/assert.h"
+
+#include <fmt/printf.h>
 #include <fmt/core.h>
 #include <utility>
 #include <vector>
@@ -44,10 +46,10 @@ void PanelAncestor::UpdateFrameSize(int width, int height)
 
 void CollectNodes(std::vector<PanelNode*>& collection, PanelNode* node)
 {
-    if (node->isParent)
+    if (node->IsParent())
     {
-        CollectNodes(collection, node->childA.get());
-        CollectNodes(collection, node->childB.get());
+        CollectNodes(collection, node->GetChildA().value());
+        CollectNodes(collection, node->GetChildB().value());
     }
     else
     {
@@ -80,21 +82,21 @@ void PanelAncestor::CloseFocusedNode()
     if (focusedNode.has_value())
     {
         auto*& focused = focusedNode.value();
-        if(focused->parent.has_value())
+        if (focused->parent.has_value())
         {
             auto*& parent = focused->parent.value();
-            if(parent->parent.has_value())
+            if (parent->parent.has_value())
             {
                 auto*& grandparent = parent->parent.value();
-                if(!focused->isParent)
+                if (!focused->isParent)
                 {
                     Unique<PanelNode> intermediary = nullptr;
-                    if(focused == parent->childB.get())
+                    if (focused == parent->childB.get())
                     {
                         CycleFocus();
                         intermediary = std::move(parent->childA);
                     }
-                    else if(focused == parent->childA.get())
+                    else if (focused == parent->childA.get())
                     {
                         CycleFocus();
                         intermediary = std::move(parent->childB);
@@ -104,12 +106,12 @@ void PanelAncestor::CloseFocusedNode()
                         TIDE_ABORT("The focused node SHOULD be a child of the parent");
                     }
 
-                    if(parent == grandparent->childA.get())
+                    if (parent == grandparent->childA.get())
                     {
                         grandparent->childA = std::move(intermediary);
                         grandparent->childA->parent = std::optional(grandparent);
                     }
-                    else if(parent == grandparent->childB.get())
+                    else if (parent == grandparent->childB.get())
                     {
                         grandparent->childB = std::move(intermediary);
                         grandparent->childB->parent = std::optional(grandparent);
@@ -126,14 +128,14 @@ void PanelAncestor::CloseFocusedNode()
             }
             else
             {
-                if(!focused->isParent)
+                if (!focused->isParent)
                 {
-                    if(focused == parent->childB.get())
+                    if (focused == parent->childB.get())
                     {
                         CycleFocus();
                         this->startNode = std::move(parent->childA);
                     }
-                    else if(focused == parent->childA.get())
+                    else if (focused == parent->childA.get())
                     {
                         CycleFocus();
                         this->startNode = std::move(parent->childB);
@@ -153,7 +155,23 @@ void PanelAncestor::CloseFocusedNode()
     }
 }
 
-PanelAncestor::PanelAncestor(const Rect& rect, const TextPanelParameters& textPanelParameters)
+void PanelAncestor::Batch()
+{
+    if(startNode)
+    {
+        startNode->Batch();
+    }
+}
+
+void PanelAncestor::TakeInput(int inputType, uint codepoint)
+{
+    if(startNode)
+    {
+        startNode->TakeInput(inputType, codepoint);
+    }
+}
+
+PanelAncestor::PanelAncestor(const Rect& rect, const FontParams& textPanelParameters)
 {
     this->startNode = std::make_unique<PanelNode>(this, std::optional<PanelNode*>{}, std::make_unique<TextPanel>(rect, textPanelParameters));
 }
@@ -167,6 +185,37 @@ PanelNode::PanelNode(PanelAncestor* ancestor, std::optional<PanelNode*> p, Uniqu
     this->panel = std::move(panel);
 }
 
+bool PanelNode::IsParent() const
+{
+    return isParent;
+}
+
+Optional<PanelNode*> PanelNode::GetChildA()
+{
+    if(childA)
+    {
+        return childA.get();
+    }
+    return Optional<PanelNode*>();
+}
+
+Optional<PanelNode*> PanelNode::GetChildB()
+{
+    if(childB)
+    {
+        return childB.get();
+    }
+    return Optional<PanelNode*>();
+}
+
+Optional<TextPanel*> PanelNode::GetPanel()
+{
+    if(panel)
+    {
+        return panel.get();
+    }
+    return Optional<TextPanel*>();
+}
 
 void PanelNode::SetFocusInternal(bool flag)
 {
@@ -207,11 +256,16 @@ void PanelNode::SetRecursiveFrameSize(int x, int y, int width, int height)
     }
 }
 
-void PanelNode::TakeInput(InputType inputType, uint codepoint)
+void PanelNode::TakeInput(int inputType, uint codepoint)
 {
     if (panel)
     {
         panel->TakeInput(inputType, codepoint);
+    }
+    else
+    {
+        if(childA) childA->TakeInput(inputType, codepoint);
+        if(childB) childB->TakeInput(inputType, codepoint);
     }
 }
 
@@ -293,4 +347,88 @@ void PanelNode::Batch()
 
         panel->Batch();
     }
+}
+
+namespace container
+{
+    
+void PrintIndentedString(std::string str, int depth, std::vector<bool> indents, bool endNode)
+{
+    for (int i = 0; i < depth; i++)
+    {
+        bool b = indents[i];
+        if (b)
+        {
+            fmt::printf("%c    ", (char)179);
+        }
+        else
+        {
+            fmt::print("     ");
+        }
+    }
+    fmt::printf("%c%c %s\n", (char)endNode ? 192 : 195, (char)240, str);
+}
+
+void PrintPanelSubnode(PanelNode* node, int depth, std::vector<bool> indents)
+{
+
+    if (node)
+    {
+        auto optionalChildA = node->GetChildA();
+        auto optionalChildB = node->GetChildB();
+        if (optionalChildA.has_value())
+        {
+            auto v = std::vector(depth, true);
+            if (depth > 0)
+            {
+                v[glm::max(0, depth - 1)] = true;
+            }
+            if (depth >= static_cast<int>(indents.size()))
+                indents.push_back(true);
+            else
+                indents[depth] = true;
+            if (optionalChildA.value()->IsParent())
+            {
+                PrintIndentedString(fmt::format("childA: {} (PARENT)", (void*) optionalChildA.value()), depth, indents, false);
+            }
+            else
+            {
+                PrintIndentedString(fmt::format("childA: {} ({})", (void*) optionalChildA.value(), (void*) optionalChildA.value()->GetPanel().value_or(nullptr)), depth, indents, false);
+            }
+            PrintPanelSubnode(optionalChildA.value(), depth + 1, indents);
+        }
+        else
+        {
+            PrintIndentedString(fmt::format("childA: null"), depth, indents, false);
+        }
+        if (optionalChildB.has_value())
+        {
+            if (depth >= static_cast<int>(indents.size()))
+                indents.push_back(false);
+            else
+                indents[depth] = false;
+            if (optionalChildB.value()->IsParent())
+            {
+                PrintIndentedString(fmt::format("childB: {} (PARENT)", (void*) optionalChildB.value()), depth, indents, true);
+            }
+            else
+            {
+                PrintIndentedString(fmt::format("childB: {} ({})", (void*) optionalChildB.value(), (void*)optionalChildB.value()), depth, indents, true);
+            }
+            PrintPanelSubnode(optionalChildB.value(), depth + 1, indents);
+        }
+        else
+        {
+            PrintIndentedString(fmt::format("childB: null"), depth, indents, true);
+        }
+    }
+}
+
+void PrintPanelTree(PanelAncestor* ancestor)
+{
+    fmt::printf("%c\n", (char)220);
+    PrintPanelSubnode(ancestor->startNode.get(), 0, {});
+    fmt::print("\n");
+}
+
 }

@@ -16,3 +16,6 @@
 [submodule "dependencies/fmt"]
 	path = dependencies/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "dependencies/toml11"]
+	path = dependencies/toml11
+	url = https://github.com/ToruNiina/toml11

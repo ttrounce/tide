@@ -41,6 +41,7 @@ add_subdirectory (dependencies/glfw)
 add_subdirectory (dependencies/glad)
 add_subdirectory (dependencies/glm)
 add_subdirectory (dependencies/fmt)
+add_subdirectory (dependencies/toml11)
 
 # Making Libraries and Executable
 
@@ -51,6 +52,7 @@ target_link_libraries (${PROJECT_LIB} glfw)
 target_link_libraries (${PROJECT_LIB} glad)
 target_link_libraries (${PROJECT_LIB} glm)
 target_link_libraries (${PROJECT_LIB} fmt)
+target_link_libraries (${PROJECT_LIB} toml11)
 target_include_directories (${PROJECT_LIB} PUBLIC src)
 
 add_executable (${PROJECT_NAME} src/main.cpp)

@@ -1,13 +1,17 @@
 #ifndef TIDE_TEXT_PANEL_H
 #define TIDE_TEXT_PANEL_H
 
-#include "engine/types.h"
-#include "engine/gfx/font.h"
+#include "../../engine/types.h"
+#include "../../engine/gfx/font.h"
+#include "../fontparams.h"
+#include "../component.h"
 #include <string>
 #include <vector>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
+namespace textpanel
+{
 enum InputType
 {
     INPUT_WRITE,
@@ -28,29 +32,7 @@ enum InputType
     INPUT_SHIFT_LEFT,
     INPUT_SHIFT_RIGHT
 };
-
-struct TextPanelParameters {
-    std::string fontName;
-    int linePadding;
-    int GetFontSize() const
-    {
-        const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
-        if(fnt)
-        {
-            return fnt->fontSize;
-        }
-        return 0;
-    }
-    int GetLineHeight() const
-    {
-        const Shared<Font>& fnt = fontRenderer->GetFont(this->fontName);
-        if(fnt)
-        {
-            return (2 * this->linePadding + (int)(fnt->ascender - fnt->descender));
-        }
-        return 0;
-    }
-};
+}
 
 class TextPanel
 {
@@ -75,17 +57,18 @@ public:
     Rect panelRectangle;
 
     // A wrapper around the text panel parameters, with some checking to avoid UB.
-    const TextPanelParameters panelParameters;
+    const FontParams panelParameters;
 
     glm::ivec2 camera;
     glm::ivec2 cursor;
 
     bool isFocused;
 
-    TextPanel(const Rect& rect, const TextPanelParameters& params);
+    TextPanel(const Rect& rect, const FontParams& params);
+    ~TextPanel(){}
 
     void Batch();
-    void TakeInput(InputType type, uint codepoint);
+    void TakeInput(int inputType, uint codepoint);
 };
 
 

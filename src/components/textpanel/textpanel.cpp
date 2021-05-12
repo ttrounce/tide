@@ -2,7 +2,7 @@
 
 #include <fmt/core.h>
 
-TextPanel::TextPanel(const Rect& rect, const TextPanelParameters& params) : panelRectangle(rect), panelParameters(params)
+TextPanel::TextPanel(const Rect& rect, const FontParams& params) : panelRectangle(rect), panelParameters(params)
 {
     cursor = { 0, 0 };
     camera = { 0, 0 };
@@ -34,7 +34,7 @@ glm::ivec2 TextPanel::GetPixelShiftBorder()
     return glm::vec2(GetContentBounds().x1 + 2 * fontSize, GetContentBounds().x2 - 2 * fontSize);
 }
 
-void TextPanel::TakeInput(InputType type, uint codepoint)
+void TextPanel::TakeInput(int type, uint codepoint)
 {
     if (!isFocused)
         return;
@@ -42,34 +42,34 @@ void TextPanel::TakeInput(InputType type, uint codepoint)
     int removeBackPos = -1;
     switch (type)
     {
-    case INPUT_WRITE:
+    case textpanel::INPUT_WRITE:
         WriteChar(codepoint);
         [[fallthrough]]
-    case INPUT_MOVE_RIGHT:
+    case textpanel::INPUT_MOVE_RIGHT:
         MoveCursorRight();
         break;
-    case INPUT_REMOVE_BACK:
+    case textpanel::INPUT_REMOVE_BACK:
         removeBackPos = RemoveBackwardChar();
         [[fallthrough]]
-    case INPUT_MOVE_LEFT:
+    case textpanel::INPUT_MOVE_LEFT:
         MoveCursorLeft(removeBackPos);
         break;
-    case INPUT_NEW_LINE:
+    case textpanel::INPUT_NEW_LINE:
         NewLine();
         break;
-    case INPUT_MOVE_UP:
+    case textpanel::INPUT_MOVE_UP:
         MoveCursorUp();
         break;
-    case INPUT_MOVE_DOWN:
+    case textpanel::INPUT_MOVE_DOWN:
         MoveCursorDown();
         break;
-    case INPUT_REMOVE_FWRD:
+    case textpanel::INPUT_REMOVE_FWRD:
         RemoveForwardChar();
         break;
-    case INPUT_SCROLL_UP:
-    case INPUT_SCROLL_DOWN:
-    case INPUT_SHIFT_LEFT:
-    case INPUT_SHIFT_RIGHT:
+    case textpanel::INPUT_SCROLL_UP:
+    case textpanel::INPUT_SCROLL_DOWN:
+    case textpanel::INPUT_SHIFT_LEFT:
+    case textpanel::INPUT_SHIFT_RIGHT:
         break;
     }
 
